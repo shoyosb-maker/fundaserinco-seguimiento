@@ -3,7 +3,7 @@
  ESTADO DEL PROYECTO
 =======================================================================
 Última actualización : 23 de noviembre de 2026
-Versión             : 0.2.5
+Versión             : 0.2.6
 Estado general      : MVP funcional. Backend de Google desplegado y
                       conectado (ping y list verificados contra la hoja
                       real). Pendiente probar la creación real de eventos
@@ -171,6 +171,8 @@ servidor estático o publicar directamente en GitHub Pages.
     notas/agenda, enlace de Meet y enlace del evento.
   · Edición y eliminación; si hay evento de Google, se intenta borrar
     también en Calendar.
+  · Eliminar directamente desde la tarjeta de la agenda con el botón
+    de papelera y confirmación.
   · Zona horaria configurable (América/Bogotá por defecto).
   · Sin Google conectado:
       - Se guarda localmente.
@@ -572,6 +574,10 @@ Verificado en navegador Chromium integrado (390, 768, 1024, 1280,
       con aviso.
   [x] Descargar TXT rechaza la descarga si falta la URL o el token.
   [x] Ventana Apps Script sin desbordamiento a 390 px.
+  [x] Eliminar reunión desde la tarjeta de la agenda y desde el modal
+      de edición, con confirmación y sin afectar Google si no hay
+      evento asociado.
+  [x] Tarjetas de reunión con tres acciones sin desbordamiento a 390 px.
   [x] Credenciales predeterminadas cargadas desde js/local-config.js
       sin guardar secretos en Git.
   [x] Sin errores de JavaScript en los flujos anteriores.
@@ -759,6 +765,14 @@ P2 · Mejoras
 
 16. HISTORIAL
 =======================================================================
+
+  2026-11-23 · v0.2.6
+    · Botón de papelera en cada tarjeta de la agenda para eliminar
+      reuniones que ya no se van a realizar.
+    · Confirmación compartida con el modal de edición y borrado del
+      evento de Calendar cuando existe.
+    · Acciones de la tarjeta compactadas en móvil.
+    · Cache busting actualizado a 20261123-10.
 
   2026-11-23 · v0.2.5
     · Datos de ejemplo y reuniones eliminados de Google Sheets y

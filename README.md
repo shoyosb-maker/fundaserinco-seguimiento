@@ -62,7 +62,7 @@ No hay build ni dependencias que instalar. No se sube ningún secreto: la URL y 
 | **Mis tareas** | Lista con búsqueda, filtros, orden y exportación a CSV. |
 | **Métricas** | KPIs, ritmo de cierre semanal, distribución por estado, prioridades, etiquetas, vencimientos y reuniones. |
 | **Roadmap** | Hitos por mes, progreso, cambio rápido de estado y carga de trabajo por vencimiento. |
-| **Reuniones** | Calendario mensual y agenda, reuniones propias, categorías, invitados, notas, plantilla de Google Calendar y Meet. |
+| **Reuniones** | Calendario mensual y agenda, reuniones propias, eliminación directa desde la agenda, categorías, invitados, notas, plantilla de Google Calendar y Meet. |
 | **Guías por sección** | Cada vista incluye una tarjeta de ayuda con 4 pasos. Se oculta con la X y se reabre con el botón **Guía**; el estado se recuerda por sección. |
 | **Terminal** | Consola funcional (`Ctrl + \``) para crear/mover/completar tareas, agendar reuniones, consultar métricas y navegar. |
 | **Ajustes** | Conexión con Google, copiar URL/token, exportar/importar conexión, prueba de conexión, sincronización, respaldo/importación JSON y borrado de datos locales. |

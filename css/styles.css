@@ -422,6 +422,7 @@ html[data-theme="dark"] .btn-primary:hover { background: var(--brand-cyan); bord
   transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
 }
 .icon-btn:hover { background: var(--panel-2); color: var(--ink); border-color: var(--line-strong); }
+.icon-btn--danger:hover { background: var(--danger-soft); color: var(--danger); border-color: color-mix(in srgb, var(--danger) 35%, var(--line)); }
 .icon-btn .material-symbols-outlined { font-size: 20px; }
 
 .conn-pill {
@@ -1563,6 +1564,9 @@ details.settings-block code {
   .tutorial__icon { width: 34px; height: 34px; }
   .tutorial__title { font-size: 12.5px; }
   .tutorial__steps { grid-template-columns: 1fr; }
+  .meeting-card__actions { gap: 4px; }
+  .meeting-card__actions .icon-btn { width: 32px; height: 32px; }
+  .meeting-card__actions .icon-btn .material-symbols-outlined { font-size: 18px; }
   .field__with-btn .btn-label { display: none; }
   .field__with-btn .btn { width: 36px; padding: 0; justify-content: center; }
   .btn-collapse { width: 36px; padding: 0; justify-content: center; }

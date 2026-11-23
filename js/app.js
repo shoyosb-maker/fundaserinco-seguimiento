@@ -812,6 +812,25 @@ window.FS = window.FS || {};
     '</div>';
   }
 
+  function deleteMeetingFlow(meeting, onDeleted) {
+    if (!meeting) return;
+    confirmDialog({
+      title: 'Eliminar reunión',
+      message: 'Se eliminará "' + meeting.title + '"' + (meeting.eventId ? ' y su evento de Google Calendar' : '') + '.',
+      confirmLabel: 'Eliminar',
+      danger: true
+    }).then(function (ok) {
+      if (!ok) return;
+      var target = meeting;
+      store.deleteMeeting(target.id);
+      toast('Reunión eliminada.', 'ok');
+      if (FS.isConfigured() && (target.eventId || target.source === 'google')) {
+        api.deleteMeeting(target).catch(function (err) { toast('No se pudo eliminar el evento en Google: ' + err.message, 'warn'); });
+      }
+      if (onDeleted) onDeleted();
+    });
+  }
+
   function meetingCardHtml(m) {
     var cat = FS.findCategory(m.category);
     var end = U.endTime(m.date, m.start, m.duration);
@@ -831,6 +850,7 @@ window.FS = window.FS || {};
       '<div class="meeting-card__actions">' +
         (m.meetLink ? '<button class="icon-btn" type="button" data-action="open-meet" data-id="' + esc(m.id) + '" title="Abrir Google Meet" aria-label="Abrir Google Meet">' + icon('videocam') + '</button>' : '') +
         '<button class="icon-btn" type="button" data-action="copy-invite" data-id="' + esc(m.id) + '" title="Copiar invitación" aria-label="Copiar invitación">' + icon('content_copy') + '</button>' +
+        '<button class="icon-btn icon-btn--danger" type="button" data-action="delete-meeting" data-id="' + esc(m.id) + '" title="Eliminar reunión" aria-label="Eliminar reunión">' + icon('delete') + '</button>' +
       '</div>' +
     '</div>';
   }
@@ -1073,21 +1093,7 @@ window.FS = window.FS || {};
     var del = handle.root.querySelector('#meeting-delete');
     if (del) {
       del.addEventListener('click', function () {
-        confirmDialog({
-          title: 'Eliminar reunión',
-          message: 'Se eliminará "' + meeting.title + '"' + (meeting.eventId ? ' y su evento de Google Calendar' : '') + '.',
-          confirmLabel: 'Eliminar',
-          danger: true
-        }).then(function (ok) {
-          if (!ok) return;
-          var target = meeting;
-          store.deleteMeeting(target.id);
-          handle.close();
-          toast('Reunión eliminada.', 'ok');
-          if (FS.isConfigured() && (target.eventId || target.source === 'google')) {
-            api.deleteMeeting(target).catch(function (err) { toast('No se pudo eliminar el evento en Google: ' + err.message, 'warn'); });
-          }
-        });
+        deleteMeetingFlow(meeting, function () { handle.close(); });
       });
     }
   }
@@ -1732,6 +1738,11 @@ window.FS = window.FS || {};
       return;
     }
     if (action === 'edit-meeting') { openMeetingModal(el.dataset.id); return; }
+    if (action === 'delete-meeting') {
+      var dm = meetingById(el.dataset.id);
+      if (dm) deleteMeetingFlow(dm);
+      return;
+    }
     if (action === 'edit-milestone') { openMilestoneModal(el.dataset.id); return; }
 
     switch (action) {
