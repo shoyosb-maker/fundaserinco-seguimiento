@@ -3,7 +3,7 @@
  ESTADO DEL PROYECTO
 =======================================================================
 Última actualización : 23 de noviembre de 2026
-Versión             : 0.2.2
+Versión             : 0.2.3
 Estado general      : MVP funcional. Backend de Google desplegado y
                       conectado (ping y list verificados contra la hoja
                       real). Pendiente probar la creación real de eventos
@@ -268,6 +268,14 @@ servidor estático o publicar directamente en GitHub Pages.
     fs.seguimiento.tutorials.v1.
   · En móvil los pasos pasan a una sola columna y la tarjeta no genera
     scroll horizontal.
+
+4.12 Ventana Apps Script
+  · Acceso desde el menú lateral: Administración → Apps Script.
+  · Muestra la URL del Web App y el token de la configuración guardada
+    en el navegador (local-config o Ajustes).
+  · Botones Copiar URL, Copiar token y Copiar ambos (URL + token).
+  · Estado vacío con aviso y botón directo a Ajustes.
+  · Los valores no se escriben en el código ni se suben a GitHub.
 
 =======================================================================
 5. MODELO DE DATOS
@@ -554,6 +562,9 @@ Verificado en navegador Chromium integrado (390, 768, 1024, 1280,
   [x] Botones Copiar URL y Copiar token funcionan con clic real.
   [x] Ajustes sin scroll horizontal a 390 px tras el ajuste de la fila
       de acciones.
+  [x] Ventana Apps Script: muestra URL y token guardados, copia cada
+      campo y ambos, estado vacío con aviso y salto a Ajustes.
+  [x] Ventana Apps Script sin desbordamiento a 390 px.
   [x] Credenciales predeterminadas cargadas desde js/local-config.js
       sin guardar secretos en Git.
   [x] Sin errores de JavaScript en los flujos anteriores.
@@ -770,6 +781,12 @@ P2 · Mejoras
 
 16. HISTORIAL
 =======================================================================
+
+  2026-11-23 · v0.2.3
+    · Ventana Apps Script en el menú lateral con URL y token de la
+      conexión guardada, copia por campo y copia de ambos.
+    · Estado vacío con aviso y acceso directo a Ajustes.
+    · Cache busting actualizado a 20261123-7.
 
   2026-11-23 · v0.2.2
     · Botones para copiar URL y token desde Ajustes.

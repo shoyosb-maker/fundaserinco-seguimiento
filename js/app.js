@@ -1149,6 +1149,80 @@ window.FS = window.FS || {};
     }
   }
 
+  /* ----------------------------- Apps Script ------------------------------- */
+  function openAppsScript() {
+    var s = FS.getSettings();
+    var hasUrl = Boolean(s.apiUrl);
+    var hasToken = Boolean(s.token);
+    var has = hasUrl && hasToken;
+
+    var body =
+      '<div class="callout' + (has ? '' : ' callout--warn') + '">' + icon(has ? 'info' : 'warning') +
+        '<div>' + (has
+          ? 'Estos datos se leen de la configuración guardada en este navegador. No están escritos en el código ni se suben a GitHub.'
+          : 'Todavía no hay credenciales guardadas en este navegador. Impórtalas o configúralas en Ajustes.') +
+        '</div></div>' +
+      '<div class="form-grid" style="margin-top:12px">' +
+        '<div class="field field--full"><label for="apps-url">URL del Web App</label>' +
+          '<div class="field__with-btn">' +
+            '<input id="apps-url" class="mono" readonly value="' + esc(s.apiUrl) + '" placeholder="Sin configurar">' +
+            '<button class="btn btn-ghost btn-sm" type="button" data-copy-apps="apiUrl" aria-label="Copiar URL" title="Copiar URL">' + icon('content_copy') + '<span class="btn-label">Copiar</span></button>' +
+          '</div></div>' +
+        '<div class="field field--full"><label for="apps-token">Token de acceso</label>' +
+          '<div class="field__with-btn">' +
+            '<input id="apps-token" class="mono" readonly value="' + esc(s.token) + '" placeholder="Sin configurar">' +
+            '<button class="btn btn-ghost btn-sm" type="button" data-copy-apps="token" aria-label="Copiar token" title="Copiar token">' + icon('content_copy') + '<span class="btn-label">Copiar</span></button>' +
+          '</div></div>' +
+      '</div>' +
+      '<p class="faint small" style="margin:10px 0 0">El token es equivalente a una contraseña: cualquiera que lo tenga puede escribir en la hoja y en el calendario.</p>';
+
+    var foot =
+      '<button class="btn btn-ghost" type="button" data-action="close-modal">Cerrar</button>' +
+      '<div class="spacer"></div>' +
+      '<button class="btn btn-ghost btn-collapse" type="button" id="apps-copy-both" aria-label="Copiar URL y token" title="Copiar URL y token">' + icon('content_copy') + '<span class="btn-label">Copiar ambos</span></button>' +
+      '<button class="btn btn-primary" type="button" id="apps-open-settings">' + icon('settings') + ' Ajustes</button>';
+
+    var handle = openModal({
+      title: 'Apps Script',
+      subtitle: 'URL y token de la conexión',
+      body: body,
+      foot: foot,
+      wide: true
+    });
+
+    Array.prototype.forEach.call(handle.root.querySelectorAll('[data-copy-apps]'), function (btn) {
+      btn.addEventListener('click', function () {
+        var value = btn.getAttribute('data-copy-apps') === 'token' ? s.token : s.apiUrl;
+        if (!value) {
+          toast('No hay credenciales guardadas en este navegador.', 'warn');
+          return;
+        }
+        U.copy(value).then(function () {
+          toast(btn.getAttribute('data-copy-apps') === 'token' ? 'Token copiado.' : 'URL copiada.', 'ok');
+        }).catch(function () {
+          toast('No se pudo copiar. Selecciona el texto manualmente.', 'warn');
+        });
+      });
+    });
+
+    handle.root.querySelector('#apps-copy-both').addEventListener('click', function () {
+      if (!hasUrl || !hasToken) {
+        toast('Faltan la URL o el token en este navegador.', 'warn');
+        return;
+      }
+      U.copy('URL: ' + s.apiUrl + '\nToken: ' + s.token).then(function () {
+        toast('URL y token copiados.', 'ok');
+      }).catch(function () {
+        toast('No se pudo copiar. Selecciona el texto manualmente.', 'warn');
+      });
+    });
+
+    handle.root.querySelector('#apps-open-settings').addEventListener('click', function () {
+      handle.close();
+      openSettings();
+    });
+  }
+
   /* ------------------------------- Ajustes --------------------------------- */
   function openSettings() {
     var s = FS.getSettings();
@@ -1597,6 +1671,9 @@ window.FS = window.FS || {};
         break;
       case 'show-tutorial':
         showTutorial(el.dataset.tutorial);
+        break;
+      case 'open-apps-script':
+        openAppsScript();
         break;
       case 'new-task':
         openTaskModal(null, el.dataset.status ? { status: el.dataset.status } : null);
