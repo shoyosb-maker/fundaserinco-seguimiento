@@ -1152,27 +1152,30 @@ window.FS = window.FS || {};
   /* ----------------------------- Apps Script ------------------------------- */
   function openAppsScript() {
     var s = FS.getSettings();
-    var hasUrl = Boolean(s.apiUrl);
-    var hasToken = Boolean(s.token);
-    var has = hasUrl && hasToken;
+    var has = Boolean(s.apiUrl && s.token);
 
     var body =
       '<div class="callout' + (has ? '' : ' callout--warn') + '">' + icon(has ? 'info' : 'warning') +
         '<div>' + (has
-          ? 'Estos datos se leen de la configuración guardada en este navegador. No están escritos en el código ni se suben a GitHub.'
-          : 'Todavía no hay credenciales guardadas en este navegador. Impórtalas o configúralas en Ajustes.') +
+          ? 'Estos datos se leen de la configuración guardada en este navegador. Puedes editarlos aquí o copiarlos; no están escritos en el código ni se suben a GitHub.'
+          : 'Todavía no hay credenciales guardadas en este navegador. Pega la URL y el token, importa una conexión o usa Ajustes.') +
         '</div></div>' +
       '<div class="form-grid" style="margin-top:12px">' +
         '<div class="field field--full"><label for="apps-url">URL del Web App</label>' +
           '<div class="field__with-btn">' +
-            '<input id="apps-url" class="mono" readonly value="' + esc(s.apiUrl) + '" placeholder="Sin configurar">' +
+            '<input id="apps-url" class="mono" value="' + esc(s.apiUrl) + '" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" spellcheck="false">' +
             '<button class="btn btn-ghost btn-sm" type="button" data-copy-apps="apiUrl" aria-label="Copiar URL" title="Copiar URL">' + icon('content_copy') + '<span class="btn-label">Copiar</span></button>' +
           '</div></div>' +
         '<div class="field field--full"><label for="apps-token">Token de acceso</label>' +
           '<div class="field__with-btn">' +
-            '<input id="apps-token" class="mono" readonly value="' + esc(s.token) + '" placeholder="Sin configurar">' +
+            '<input id="apps-token" class="mono" value="' + esc(s.token) + '" placeholder="Token generado por instalar()" autocomplete="off" spellcheck="false">' +
             '<button class="btn btn-ghost btn-sm" type="button" data-copy-apps="token" aria-label="Copiar token" title="Copiar token">' + icon('content_copy') + '<span class="btn-label">Copiar</span></button>' +
           '</div></div>' +
+      '</div>' +
+      '<div class="field-row" style="margin-top:12px;flex-wrap:wrap">' +
+        '<button class="btn btn-ghost btn-sm" type="button" id="apps-import">' + icon('upload') + ' Importar conexión</button>' +
+        '<input type="file" id="apps-file" accept="application/json,.json" hidden>' +
+        '<button class="btn btn-ghost btn-sm" type="button" id="apps-open-settings">' + icon('settings') + ' Más opciones en Ajustes</button>' +
       '</div>' +
       '<p class="faint small" style="margin:10px 0 0">El token es equivalente a una contraseña: cualquiera que lo tenga puede escribir en la hoja y en el calendario.</p>';
 
@@ -1180,7 +1183,7 @@ window.FS = window.FS || {};
       '<button class="btn btn-ghost" type="button" data-action="close-modal">Cerrar</button>' +
       '<div class="spacer"></div>' +
       '<button class="btn btn-ghost btn-collapse" type="button" id="apps-copy-both" aria-label="Copiar URL y token" title="Copiar URL y token">' + icon('content_copy') + '<span class="btn-label">Copiar ambos</span></button>' +
-      '<button class="btn btn-primary" type="button" id="apps-open-settings">' + icon('settings') + ' Ajustes</button>';
+      '<button class="btn btn-primary" type="button" id="apps-save">' + icon('save') + ' Guardar</button>';
 
     var handle = openModal({
       title: 'Apps Script',
@@ -1190,11 +1193,20 @@ window.FS = window.FS || {};
       wide: true
     });
 
+    var urlInput = handle.root.querySelector('#apps-url');
+    var tokenInput = handle.root.querySelector('#apps-token');
+    var fileInput = handle.root.querySelector('#apps-file');
+
+    function readInputs() {
+      return { apiUrl: urlInput.value.trim(), token: tokenInput.value.trim() };
+    }
+
     Array.prototype.forEach.call(handle.root.querySelectorAll('[data-copy-apps]'), function (btn) {
       btn.addEventListener('click', function () {
-        var value = btn.getAttribute('data-copy-apps') === 'token' ? s.token : s.apiUrl;
+        var values = readInputs();
+        var value = btn.getAttribute('data-copy-apps') === 'token' ? values.token : values.apiUrl;
         if (!value) {
-          toast('No hay credenciales guardadas en este navegador.', 'warn');
+          toast('No hay nada que copiar todavía.', 'warn');
           return;
         }
         U.copy(value).then(function () {
@@ -1206,15 +1218,75 @@ window.FS = window.FS || {};
     });
 
     handle.root.querySelector('#apps-copy-both').addEventListener('click', function () {
-      if (!hasUrl || !hasToken) {
-        toast('Faltan la URL o el token en este navegador.', 'warn');
+      var values = readInputs();
+      if (!values.apiUrl || !values.token) {
+        toast('Faltan la URL o el token.', 'warn');
         return;
       }
-      U.copy('URL: ' + s.apiUrl + '\nToken: ' + s.token).then(function () {
+      U.copy('URL: ' + values.apiUrl + '\nToken: ' + values.token).then(function () {
         toast('URL y token copiados.', 'ok');
       }).catch(function () {
         toast('No se pudo copiar. Selecciona el texto manualmente.', 'warn');
       });
+    });
+
+    handle.root.querySelector('#apps-save').addEventListener('click', function () {
+      var values = readInputs();
+      if (!values.apiUrl) {
+        toast('Pega la URL del Web App.', 'warn');
+        urlInput.focus();
+        return;
+      }
+      if (!values.token) {
+        toast('Pega el token de acceso.', 'warn');
+        tokenInput.focus();
+        return;
+      }
+      FS.saveSettings(values);
+      refreshConnection(true);
+      handle.close();
+      openAppsScript();
+      toast('Conexión guardada en este navegador.', 'ok');
+    });
+
+    handle.root.querySelector('#apps-import').addEventListener('click', function () {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', function (e) {
+      var input = e.target;
+      var file = input.files && input.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        try {
+          var data = JSON.parse(reader.result);
+          var next = data && data.settings ? data.settings : data;
+          if (!next || typeof next.apiUrl !== 'string' || !next.apiUrl.trim()) {
+            throw new Error('El archivo no contiene una URL válida.');
+          }
+          if (typeof next.token !== 'string' || !next.token.trim()) {
+            throw new Error('El archivo no contiene el token.');
+          }
+          var current = FS.getSettings();
+          FS.saveSettings({
+            apiUrl: next.apiUrl.trim(),
+            token: next.token.trim(),
+            calendarId: typeof next.calendarId === 'string' && next.calendarId.trim() ? next.calendarId.trim() : current.calendarId,
+            timezone: typeof next.timezone === 'string' && next.timezone ? next.timezone : current.timezone,
+            meetByDefault: typeof next.meetByDefault === 'boolean' ? next.meetByDefault : current.meetByDefault
+          });
+          refreshConnection(true);
+          handle.close();
+          openAppsScript();
+          toast('Conexión importada y guardada.', 'ok');
+        } catch (err) {
+          toast('No se pudo importar la conexión: ' + err.message, 'err');
+        } finally {
+          input.value = '';
+        }
+      };
+      reader.readAsText(file);
     });
 
     handle.root.querySelector('#apps-open-settings').addEventListener('click', function () {

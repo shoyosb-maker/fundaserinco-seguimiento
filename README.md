@@ -66,7 +66,7 @@ No hay build ni dependencias que instalar. No se sube ningún secreto: la URL y 
 | **Guías por sección** | Cada vista incluye una tarjeta de ayuda con 4 pasos. Se oculta con la X y se reabre con el botón **Guía**; el estado se recuerda por sección. |
 | **Terminal** | Consola funcional (`Ctrl + \``) para crear/mover/completar tareas, agendar reuniones, consultar métricas y navegar. |
 | **Ajustes** | Conexión con Google, copiar URL/token, exportar/importar conexión, prueba de conexión, sincronización, respaldo/importación JSON y borrado de datos locales. |
-| **Apps Script** | Ventana emergente desde el menú lateral con la URL y el token de la conexión guardada, botones para copiar cada uno o ambos y acceso directo a Ajustes. |
+| **Apps Script** | Ventana emergente desde el menú lateral con la URL y el token editables, botones para copiar cada uno o ambos, importar conexión, guardar y acceso directo a Ajustes. |
 
 ### Atajos
 
@@ -165,7 +165,7 @@ Con eso:
 
 El manifiesto habilita `Calendar API v3`. Si no está disponible, el backend crea el evento con `CalendarApp` (sin Meet automático) y devuelve una advertencia. Para habilitarlo manualmente: **Apps Script → Servicios → + → Google Calendar API**.
 
-El menú lateral **Apps Script** abre una ventana con la URL y el token guardados en ese navegador para copiarlos cuando los necesites. No están escritos en el código: se leen de la configuración de la app.
+El menú lateral **Apps Script** abre una ventana con la URL y el token guardados en ese navegador. Puedes editarlos y pulsar **Guardar**, importar una conexión o copiarlos cuando los necesites. No están escritos en el código: se leen de la configuración de la app.
 
 La guía completa, con contrato de la API, columnas de las hojas y solución de problemas, está en [`estado-del-proyecto.txt`](./estado-del-proyecto.txt).
 

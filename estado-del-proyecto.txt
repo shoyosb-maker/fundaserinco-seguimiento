@@ -3,7 +3,7 @@
  ESTADO DEL PROYECTO
 =======================================================================
 Última actualización : 23 de noviembre de 2026
-Versión             : 0.2.3
+Versión             : 0.2.4
 Estado general      : MVP funcional. Backend de Google desplegado y
                       conectado (ping y list verificados contra la hoja
                       real). Pendiente probar la creación real de eventos
@@ -273,8 +273,12 @@ servidor estático o publicar directamente en GitHub Pages.
   · Acceso desde el menú lateral: Administración → Apps Script.
   · Muestra la URL del Web App y el token de la configuración guardada
     en el navegador (local-config o Ajustes).
+  · Campos editables para pegar URL y token; Guardar persiste los
+    valores y refresca la conexión.
+  · Importar conexión desde fundaserinco-conexion.json.
   · Botones Copiar URL, Copiar token y Copiar ambos (URL + token).
-  · Estado vacío con aviso y botón directo a Ajustes.
+  · Estado vacío con aviso y acceso a Ajustes para calendario, zona
+    horaria y Meet.
   · Los valores no se escriben en el código ni se suben a GitHub.
 
 =======================================================================
@@ -562,8 +566,9 @@ Verificado en navegador Chromium integrado (390, 768, 1024, 1280,
   [x] Botones Copiar URL y Copiar token funcionan con clic real.
   [x] Ajustes sin scroll horizontal a 390 px tras el ajuste de la fila
       de acciones.
-  [x] Ventana Apps Script: muestra URL y token guardados, copia cada
-      campo y ambos, estado vacío con aviso y salto a Ajustes.
+  [x] Ventana Apps Script: muestra URL y token guardados, permite
+      editarlos y guardarlos, importa una conexión, copia cada campo y
+      ambos, y muestra estado vacío con aviso.
   [x] Ventana Apps Script sin desbordamiento a 390 px.
   [x] Credenciales predeterminadas cargadas desde js/local-config.js
       sin guardar secretos en Git.
@@ -781,6 +786,12 @@ P2 · Mejoras
 
 16. HISTORIAL
 =======================================================================
+
+  2026-11-23 · v0.2.4
+    · Ventana Apps Script con campos editables para pegar URL y token,
+      botón Guardar e importación de conexión.
+    · Acceso a Ajustes para calendario, zona horaria y Meet.
+    · Cache busting actualizado a 20261123-8.
 
   2026-11-23 · v0.2.3
     · Ventana Apps Script en el menú lateral con URL y token de la
