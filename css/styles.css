@@ -627,6 +627,73 @@ select {
 .view-head__desc { color: var(--muted); font-size: 13.5px; margin-top: 4px; max-width: 70ch; }
 .view-head__actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
+/* ------------------------------ Tutoriales ------------------------------- */
+.tutorial {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 30px;
+  gap: 14px;
+  align-items: start;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--glass-1), var(--glass-2));
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-highlight);
+  animation: tutorial-in 220ms ease both;
+}
+.tutorial:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.tutorial__icon {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+.tutorial__icon .material-symbols-outlined { font-size: 20px; }
+.tutorial__eyebrow {
+  font-size: 9.5px; font-weight: 800; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--primary);
+}
+.tutorial__title {
+  margin: 2px 0 9px;
+  font-size: 13.5px; font-weight: 800; letter-spacing: -0.01em;
+}
+.tutorial__steps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 18px;
+  margin: 0; padding: 0;
+  list-style: none;
+}
+.tutorial__steps li {
+  display: flex; gap: 8px;
+  font-size: 11.5px; line-height: 1.45; color: var(--muted);
+}
+.tutorial__steps strong { color: var(--ink-2); font-weight: 700; }
+.tutorial__step-num {
+  width: 18px; height: 18px; flex-shrink: 0;
+  margin-top: 1px;
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--primary);
+  font-family: var(--mono); font-size: 9px; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.tutorial__close { width: 28px; height: 28px; }
+.tutorial__close .material-symbols-outlined { font-size: 16px; }
+.tutorial.is-flash { animation: tutorial-flash 1.1s ease; }
+@keyframes tutorial-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes tutorial-flash {
+  0%, 100% { box-shadow: var(--glass-highlight); }
+  45% { box-shadow: 0 0 0 3px var(--primary-soft), var(--glass-highlight); }
+}
+
 .section-title {
   display: flex; align-items: center; gap: 8px;
   font-size: 13px; font-weight: 800; letter-spacing: 0.02em;
@@ -1488,6 +1555,10 @@ details.settings-block code {
   .board-toolbar, .tasks-toolbar, .cal-toolbar { padding: 8px; }
   .board-toolbar .glass-select, .tasks-toolbar .glass-select { flex: 1 1 46%; min-width: 0; }
   .board-toolbar .search-box, .tasks-toolbar .search-box { flex: 1 1 100%; max-width: none; }
+  .tutorial { grid-template-columns: 34px minmax(0, 1fr) 28px; gap: 10px; padding: 12px; }
+  .tutorial__icon { width: 34px; height: 34px; }
+  .tutorial__title { font-size: 12.5px; }
+  .tutorial__steps { grid-template-columns: 1fr; }
   .cal-month-label { min-width: 0; font-size: 15px; }
   .cal-day { min-height: 84px; padding: 4px; }
   .cal-day__num { width: 20px; height: 20px; font-size: 10px; }

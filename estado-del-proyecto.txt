@@ -3,7 +3,7 @@
  ESTADO DEL PROYECTO
 =======================================================================
 Última actualización : 23 de noviembre de 2026
-Versión             : 0.2.0
+Versión             : 0.2.1
 Estado general      : MVP funcional. Backend de Google desplegado y
                       conectado (ping y list verificados contra la hoja
                       real). Pendiente probar la creación real de eventos
@@ -251,6 +251,16 @@ servidor estático o publicar directamente en GitHub Pages.
   · Halos orbitales de marca detrás del contenido (Tech Blue y Solar
     Coral) para dar profundidad al vidrio.
   · Contraste y legibilidad conservados en ambos temas.
+
+4.11 Guías por sección
+  · Cada vista (tablero, tareas, métricas, roadmap y reuniones) muestra
+    una tarjeta "Guía rápida" con 4 pasos concretos.
+  · Se oculta con la X; el botón "Guía" de la cabecera la vuelve a
+    mostrar, la enfoca y la resalta brevemente.
+  · El estado se guarda por sección en localStorage bajo
+    fs.seguimiento.tutorials.v1.
+  · En móvil los pasos pasan a una sola columna y la tarjeta no genera
+    scroll horizontal.
 
 =======================================================================
 5. MODELO DE DATOS
@@ -526,6 +536,11 @@ Verificado en navegador Chromium integrado (390, 768, 1024, 1280,
       8 tareas (las 5 columnas), 5 reuniones demo + la reunión existente
       y 6 hitos que cubren nov-2026 a mar-2027.
   [x] Barras de carga del roadmap visibles tras corregir el display.
+  [x] Guías por sección: 5 tarjetas con 4 pasos cada una, cierre
+      persistente tras recargar y reapertura con el botón Guía (con
+      foco y realce).
+  [x] Sin scroll horizontal con la guía abierta a 390, 768, 1024,
+      1440 y 1920 px.
   [x] Credenciales predeterminadas cargadas desde js/local-config.js
       sin guardar secretos en Git.
   [x] Sin errores de JavaScript en los flujos anteriores.
@@ -742,6 +757,12 @@ P2 · Mejoras
 
 16. HISTORIAL
 =======================================================================
+
+  2026-11-23 · v0.2.1
+    · Guías rápidas en las 5 vistas con 4 pasos cada una.
+    · Botón Guía para reabrir, enfocar y resaltar la tarjeta.
+    · Estado de las guías persistente por sección.
+    · Cache busting actualizado a 20261123-5.
 
   2026-11-23 · v0.2.0
     · Credenciales de Google como predeterminados locales mediante

@@ -221,6 +221,40 @@ window.FS = window.FS || {};
     bd.classList.toggle('is-open', open);
   }
 
+  function tutorialState() {
+    return U.loadJSON(FS.STORAGE.tutorials, {}) || {};
+  }
+
+  function applyTutorialState() {
+    var state = tutorialState();
+    $$('.tutorial[data-tutorial]').forEach(function (card) {
+      card.hidden = Boolean(state[card.dataset.tutorial]);
+    });
+  }
+
+  function dismissTutorial(key) {
+    if (!key) return;
+    var state = tutorialState();
+    state[key] = true;
+    U.saveJSON(FS.STORAGE.tutorials, state);
+    var card = document.querySelector('.tutorial[data-tutorial="' + key + '"]');
+    if (card) card.hidden = true;
+    var trigger = document.querySelector('[data-action="show-tutorial"][data-tutorial="' + key + '"]');
+    if (trigger) trigger.focus();
+  }
+
+  function showTutorial(key) {
+    var card = document.querySelector('.tutorial[data-tutorial="' + key + '"]');
+    if (!card) return;
+    card.hidden = false;
+    card.classList.remove('is-flash');
+    void card.offsetWidth;
+    card.classList.add('is-flash');
+    if (card.focus) card.focus({ preventScroll: true });
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(function () { card.classList.remove('is-flash'); }, 1200);
+  }
+
   function openTerminal() {
     $('#terminal').classList.add('is-open');
     $('#terminal').setAttribute('aria-hidden', 'false');
@@ -1476,6 +1510,12 @@ window.FS = window.FS || {};
       case 'close-modal':
         closeTopModal();
         break;
+      case 'dismiss-tutorial':
+        dismissTutorial(el.dataset.tutorial);
+        break;
+      case 'show-tutorial':
+        showTutorial(el.dataset.tutorial);
+        break;
       case 'new-task':
         openTaskModal(null, el.dataset.status ? { status: el.dataset.status } : null);
         break;
@@ -1682,6 +1722,7 @@ window.FS = window.FS || {};
     });
 
     render();
+    applyTutorialState();
     refreshConnection(true);
 
     var seenKey = 'fs.seguimiento.seen';

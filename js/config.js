@@ -4,12 +4,13 @@ window.FS = window.FS || {};
 (function (FS) {
   'use strict';
 
-  FS.APP_VERSION = '0.2.0';
+  FS.APP_VERSION = '0.2.1';
 
   FS.STORAGE = {
     data: 'fs.seguimiento.data.v1',
     settings: 'fs.seguimiento.settings.v1',
-    theme: 'fs.seguimiento.theme'
+    theme: 'fs.seguimiento.theme',
+    tutorials: 'fs.seguimiento.tutorials.v1'
   };
 
   FS.STATUSES = [
