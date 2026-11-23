@@ -1,0 +1,637 @@
+=======================================================================
+ FUNDASERINCO · SISTEMA DE SEGUIMIENTO
+ ESTADO DEL PROYECTO
+=======================================================================
+Última actualización : 23 de noviembre de 2026
+Versión             : 0.1.0
+Estado general      : MVP funcional en modo local.
+                      Backend de Google programado, documentado y listo
+                      para desplegar; pendiente probarlo contra una cuenta
+                      real de Google.
+Marca               : Fundaserinco Brand Hub v1.0
+Tecnología          : HTML + CSS + JavaScript (sin build, sin framework)
+Persistencia        : localStorage + Google Sheets opcional
+Reuniones           : Google Calendar / Google Meet (opcional)
+Terminal            : funcional (Ctrl + `)
+
+=======================================================================
+1. RESUMEN EJECUTIVO
+=======================================================================
+
+Se construyó desde cero una aplicación web de seguimiento personal con la
+identidad visual de Fundaserinco. La aplicación funciona sin instalar nada:
+se abre en el navegador y guarda todo localmente.
+
+Incluye:
+  · Tablero kanban con arrastrar y soltar.
+  · Lista de tareas con filtros, orden y exportación.
+  · Métricas calculadas en vivo.
+  · Roadmap con hitos y carga mensual.
+  · Calendario de reuniones propias (sin datos de ejemplo).
+  · Terminal de comandos real.
+  · Integración opcional con Google Sheets (base de datos) y Google
+    Calendar (eventos + enlace de Google Meet).
+  · Ajustes con prueba de conexión, respaldo JSON y borrado de datos.
+
+Decisiones de alcance acordadas:
+  · NO se cargan reuniones ni tareas de ejemplo.
+  · NO hay usuarios/autenticación en esta fase.
+  · Primero debe funcionar; después se agregan usuarios y extras.
+  · El proyecto quedará listo para publicarse en GitHub / GitHub Pages.
+
+=======================================================================
+2. IDENTIDAD DE MARCA APLICADA
+=======================================================================
+
+Fuente: manual Fundaserinco Brand Hub v1.0 (carpeta brand-hub).
+
+  · Tech Blue       #0086C8  (color primario, 60%)
+  · Solar Coral     #F48A56  (acento, 20%)
+  · Orbit Cyan      #4EA8DE  (halos y datos secundarios, 10%)
+  · Navy profundo   #0F172A / #0B101C (superficies oscuras)
+  · Tipografía      Plus Jakarta Sans (fallback Outfit, Montserrat,
+                    system-ui). Pesos 400 a 800.
+  · Mono            JetBrains Mono para terminal y cifras.
+  · Radios          8 a 16 px; rejilla base de 8 pt.
+  · Logo            Símbolo oficial + lockup tipográfico.
+  · Favicons        favicon.ico, 16, 32, 48, 192, 512 y apple-touch-icon.
+  · Social          og-fundaserinco.jpg enlazada en metadatos.
+  · Temas           Claro y oscuro, siguiendo la preferencia del sistema
+                    la primera vez; elección guardada en localStorage.
+  · PWA             site.webmanifest con iconos y colores de marca.
+
+Archivos copiados desde el brand hub:
+  assets/img/logo-fundaserinco.png
+  assets/img/logo-simbolo.png
+  assets/img/logo-simbolo-512.png
+  assets/img/logo-wordmark.png
+  assets/img/favicon.ico
+  assets/img/favicon-16.png
+  assets/img/favicon-32.png
+  assets/img/favicon-48.png
+  assets/img/favicon-192.png
+  assets/img/favicon-512.png
+  assets/img/apple-touch-icon.png
+  assets/img/og-fundaserinco.jpg
+
+=======================================================================
+3. ESTRUCTURA DEL PROYECTO
+=======================================================================
+
+index.html                     Shell de la SPA (navegación por hash).
+css/styles.css                 Tokens de marca, componentes, temas,
+                               responsive, terminal, modales y toasts.
+js/config.js                   Catálogos (estados, prioridades, categorías),
+                               ajustes, zonas horarias y utilidades.
+js/store.js                    Estado local, CRUD, métricas, merge e import.
+js/api.js                      Cliente HTTP del Web App de Apps Script,
+                               enlaces de Calendar y conversión de zona horaria.
+js/app.js                      Vistas, modales, drag & drop, filtros,
+                               sincronización e integración con Google.
+js/terminal.js                 Intérprete de comandos de la terminal.
+assets/img/                    Logos y favicons oficiales.
+google-apps-script/Code.gs     Backend: Sheets + Calendar + Meet.
+google-apps-script/appsscript.json
+site.webmanifest               Metadatos e iconos de instalación.
+README.md                      Guía rápida y publicación.
+estado-del-proyecto.txt        Este documento.
+
+No hay dependencias npm ni proceso de build. Se puede abrir con un
+servidor estático o publicar directamente en GitHub Pages.
+
+=======================================================================
+4. FUNCIONALIDADES IMPLEMENTADAS (DETALLE)
+=======================================================================
+
+4.1 Shell y navegación
+  · Sidebar fija con logo, contadores y accesos.
+  · Barra superior con título, estado de conexión, tema, ajustes,
+    terminal y botón de nueva tarea.
+  · Rutas por hash: #/board, #/tasks, #/metrics, #/roadmap, #/meetings.
+  · Responsive: sidebar deslizante con fondo oscuro y botón de cierre en
+    móvil; acciones secundarias ocultas en pantallas pequeñas.
+  · Tema claro/oscuro persistente y metadatos theme-color actualizados.
+  · Toasts de confirmación/error.
+  · Atajos: n (nueva tarea), m (nueva reunión), ? (ayuda terminal),
+    Ctrl + ` (terminal), Esc (cerrar).
+
+4.2 Tablero
+  · Cinco columnas: Backlog, Por hacer, En progreso, En revisión, Hecho.
+  · Tarjetas con ID (FS-001), prioridad, etiquetas, puntos, responsable,
+    vencimiento y estado de atraso.
+  · Arrastrar y soltar entre columnas con actualización inmediata.
+  · Botón "+" por columna para crear tarea en ese estado.
+  · Filtros por texto, prioridad y responsable.
+  · Contadores y puntos por columna; progreso global.
+  · Estados vacíos claros.
+
+4.3 Mis tareas
+  · Lista completa con búsqueda, filtro por estado, filtro por prioridad
+    y orden por actualización, vencimiento, prioridad o título.
+  · Edición en modal, eliminación con confirmación.
+  · Exportación CSV con BOM UTF-8 (compatible con Excel).
+  · Estado vacío con acción para limpiar filtros.
+
+4.4 Métricas
+  · KPIs: activas, completadas, vencidas, puntos completados, reuniones
+    próximas e hitos.
+  · Gráfico de barras de cierre por semana (últimas 8 semanas).
+  · Donut de distribución por estado.
+  · Barras de prioridad y etiquetas más usadas.
+  · Próximos vencimientos y próximas reuniones.
+  · Todo se calcula desde datos reales; no hay cifras de ejemplo.
+
+4.5 Roadmap
+  · Hitos con título, fecha, estado y descripción.
+  · Línea de tiempo agrupada por mes.
+  · Progreso de hitos, próximo hito y cambio rápido de estado
+    (planeado → en curso → completado).
+  · Carga mensual calculada con tareas abiertas y su vencimiento
+    (mes actual + 5 meses).
+  · CRUD completo con confirmación al eliminar.
+
+4.6 Reuniones
+  · Calendario mensual (semana inicia en lunes) y vista Agenda.
+  · Navegación de meses, botón Hoy y pestañas Mes/Agenda.
+  · Creación desde el calendario (día concreto), botón general o
+    terminal.
+  · Categorías con color: Sync/Daily, Revisión, Planificación, Demo,
+    Otro.
+  · Campos: título, fecha, hora, duración, categoría, invitados,
+    notas/agenda, enlace de Meet y enlace del evento.
+  · Edición y eliminación; si hay evento de Google, se intenta borrar
+    también en Calendar.
+  · Zona horaria configurable (América/Bogotá por defecto).
+  · Sin Google conectado:
+      - Se guarda localmente.
+      - Botón para abrir plantilla de Google Calendar.
+      - Botón para crear un Meet al instante y pegar luego el enlace.
+  · Con Google conectado:
+      - Se crea/actualiza el evento del calendario.
+      - Se genera enlace de Meet (servicio avanzado Calendar API).
+      - Se envían invitaciones a los correos indicados.
+      - Se guardan eventId, eventLink y meetLink.
+  · Importación de eventos existentes del calendario al rango de fechas
+    (mes anterior a 4 meses siguientes), evitando duplicados por
+    fecha/hora/título/eventId.
+  · Copiar invitación al portapapeles (texto con fecha, hora, Meet y
+    notas).
+
+4.7 Terminal (funcional)
+  · Se abre con Ctrl + ` o desde el menú.
+  · Historial con flechas, autocompletado básico con Tab y Ctrl+L para
+    limpiar.
+  · Comandos implementados:
+      help                       Ayuda.
+      ls [estado]                Lista tareas.
+      add "Título" [estado] [prioridad] [puntos]
+                                 Crea tarea (también sin comillas).
+      edit <id>                  Abre la tarea.
+      done <id>                  Marca como hecha.
+      mv <id> <estado>           Cambia de estado.
+      rm <id>                    Elimina con confirmación.
+      meet "Título" [fecha] [hora] [min]
+                                 Crea reunión y Meet si hay Google.
+      stats                      Resumen rápido.
+      board|tasks|metrics|roadmap|meetings
+                                 Navega.
+      theme [dark|light]         Cambia el tema.
+      sync                       Sincroniza con Google.
+      export [json|csv]          Descarga respaldo.
+      settings                   Abre ajustes.
+      config                     Muestra configuración (token oculto).
+      clear                      Limpia la terminal.
+      version | date | echo      Utilidades.
+  · La terminal usa exactamente el mismo store que la interfaz; los
+    cambios se reflejan en las vistas al instante.
+  · Si Google está conectado, las operaciones se envían al backend.
+
+4.8 Ajustes
+  · URL del Web App, token, ID de calendario y zona horaria.
+  · Interruptor "Crear Meet por defecto".
+  · Probar conexión (ping real) con mensaje de éxito/error.
+  · Sincronizar ahora.
+  · Exportar JSON completo.
+  · Importar JSON (merge por id).
+  · Borrar todos los datos locales (con confirmación; no toca Sheets).
+  · Instrucciones integradas de conexión.
+  · El token se guarda solo en localStorage; nunca en el repositorio.
+
+=======================================================================
+5. MODELO DE DATOS
+=======================================================================
+
+5.1 Tarea
+  id            FS-001 (secuencial, no se reutiliza tras recargar)
+  title         Texto
+  description   Texto
+  status        backlog | todo | in_progress | review | done
+  priority      urgent | high | medium | low
+  points        Número (SP)
+  assignee      Texto
+  tags          Arreglo de texto
+  due           YYYY-MM-DD
+  created       ISO 8601
+  updated       ISO 8601
+  completedAt   ISO 8601 o null
+  source        local | sheet
+
+5.2 Reunión
+  id            MT-001
+  title         Texto
+  date          YYYY-MM-DD
+  start         HH:MM
+  duration      Minutos
+  category      sync | review | planning | demo | other
+  attendees     Arreglo de correos
+  notes         Texto
+  meetLink      URL de Google Meet
+  eventLink     URL del evento de Calendar
+  eventId       ID del evento de Google
+  source        local | google
+  created       ISO 8601
+  updated       ISO 8601
+
+5.3 Hito
+  id            HT-001
+  title         Texto
+  date          YYYY-MM-DD
+  status        planned | in_progress | done
+  description   Texto
+  created       ISO 8601
+  updated       ISO 8601
+
+5.4 Claves de localStorage
+  fs.seguimiento.data.v1       Tareas, reuniones, hitos y metadatos.
+  fs.seguimiento.settings.v1   URL, token, calendario, zona y preferencias.
+  fs.seguimiento.theme         Tema elegido.
+  fs.seguimiento.seen          Bandera del mensaje de bienvenida.
+
+=======================================================================
+6. GOOGLE SHEETS COMO BACKEND
+=======================================================================
+
+6.1 Qué hace
+  El archivo google-apps-script/Code.gs convierte una hoja de cálculo en
+  una API JSON. La app web estática llama a esa API con fetch.
+
+  Hojas creadas automáticamente:
+    Tareas     · id, title, description, status, priority, points,
+                 assignee, tags, due, created, updated, completedAt
+    Reuniones  · id, title, date, start, duration, category, attendees,
+                 notes, meetLink, eventLink, eventId, source, created,
+                 updated
+    Hitos      · id, title, date, status, description, created, updated
+
+6.2 Contrato de la API
+  Todas las peticiones exigen un token.
+
+  GET  <url>/exec?token=TOKEN&action=ping
+  GET  <url>/exec?token=TOKEN&action=list
+
+  POST <url>/exec        (Content-Type: text/plain;charset=utf-8)
+  Body:
+    {
+      "token": "TOKEN",
+      "action": "upsertTask",
+      "data": { ... }
+    }
+
+  Acciones POST:
+    ping                 Verifica credenciales y devuelve datos de la hoja.
+    list                 Devuelve { tasks, meetings, milestones }.
+    upsertTask           Inserta o actualiza una tarea por id.
+    deleteTask           Elimina por id.
+    upsertMeeting        Guarda reunión; con createMeet=true crea el evento
+                         y el Meet.
+    deleteMeeting        Elimina fila y, si existe, el evento de Calendar.
+    upsertMilestone      Inserta o actualiza un hito.
+    deleteMilestone      Elimina un hito.
+    bulkUpsert           Inserta/actualiza listas completas (sincronización).
+    importCalendar       Devuelve eventos del calendario en un rango.
+
+  Respuesta:
+    { "ok": true, "data": ... }
+    { "ok": false, "error": "mensaje" }
+
+  Se usa Content-Type text/plain para evitar el preflight CORS, que
+  Apps Script no responde.
+
+6.3 Instalación paso a paso
+  1. Crear una hoja de cálculo nueva en Google Sheets.
+  2. Menú Extensiones → Apps Script.
+  3. Borrar el contenido de Code.gs y pegar google-apps-script/Code.gs.
+  4. Abrir Configuración del proyecto → activar "Mostrar archivo de
+     manifiesto appsscript.json" y pegar google-apps-script/appsscript.json.
+     Esto habilita el servicio avanzado Google Calendar API.
+  5. Guardar y ejecutar la función "instalar" una vez.
+     Autorizar los permisos solicitados.
+     En el registro de ejecución aparecerá:
+        TOKEN: xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+     Copiar ese valor.
+  6. Implementar → Nueva implementación → Aplicación web:
+        Ejecutar como: yo
+        Quién tiene acceso: cualquier persona
+     Implementar y copiar la URL que termina en /exec.
+  7. En la aplicación: Ajustes → Conexión con Google.
+        URL del Web App: <url /exec>
+        Token: <token copiado>
+        Calendario: primary
+        Zona horaria: America/Bogota (o la que corresponda)
+     Guardar y pulsar "Probar conexión".
+  8. Probar una tarea y una reunión; revisar que aparezcan en las hojas
+     Tareas y Reuniones.
+
+  Nota: cada vez que se modifique Code.gs hay que crear una nueva versión
+  de la implementación (Administrar implementaciones → Editar → Nueva
+  versión) o implementar de nuevo.
+
+6.4 Seguridad
+  · El token vive en Propiedades del script (API_TOKEN) y en el
+    localStorage del navegador. Nunca está en el código.
+  · Cualquiera que tenga la URL /exec y el token puede leer/escribir la
+    hoja. Tratarlo como una contraseña.
+  · No se debe publicar el token en GitHub ni en capturas.
+  · El acceso "cualquier persona" es necesario para que la web estática
+    pueda llamar al Web App. No es lo mismo que la hoja sea pública: la
+    hoja sigue privada; la API exige token.
+
+=======================================================================
+7. GOOGLE CALENDAR Y GOOGLE MEET
+=======================================================================
+
+7.1 Creación automática
+  Cuando se guarda una reunión con Google conectado y la casilla de Meet
+  activa, el backend:
+    1. Convierte fecha/hora de la zona configurada al formato de Calendar.
+    2. Crea el evento con los invitados indicados.
+    3. Solicita una conferencia de tipo hangoutsMeet mediante
+       conferenceData.createRequest.
+    4. Devuelve y guarda eventId, eventLink y meetLink.
+    5. Envía la invitación a los correos (sendUpdates: all).
+
+  Esto usa el servicio avanzado "Google Calendar API v3", habilitado por
+  appsscript.json. Sin ese servicio, el backend crea el evento con
+  CalendarApp pero sin Meet, y devuelve una advertencia visible en la app.
+
+7.2 Edición y borrado
+  · Editar una reunión con eventId actualiza el evento (patch) sin crear
+    uno nuevo.
+  · Eliminar la reunión intenta borrar el evento de Calendar primero.
+  · Si la API avanzada falla, se usa CalendarApp como respaldo.
+
+7.3 Modo sin Google
+  · La reunión se guarda localmente.
+  · El modal ofrece:
+       - Abrir plantilla de Calendar (evento con título, fecha, detalles
+         e invitados; sin Meet automático).
+       - Crear Meet ahora (abre https://meet.google.com/new).
+  · El enlace de Meet generado manualmente se puede pegar en el campo
+    "Enlace de Meet" y se guarda en la reunión.
+  · La agenda muestra la etiqueta "Meet" y el botón para abrirlo.
+
+7.4 Importar desde Google Calendar
+  · Botón "Importar de Google" en Reuniones.
+  · Rango: mes anterior a 4 meses siguientes.
+  · Se omiten eventos de día completo.
+  · Se evitan duplicados por fecha/hora + eventId o título.
+  · CalendarApp no expone el enlace de Meet de eventos existentes; esos
+    eventos se importan sin meetLink (se puede pegar a mano).
+
+7.5 Zona horaria
+  · La app convierte la hora de pared de la zona configurada al instante
+    UTC correcto para la plantilla de Calendar (probado: Bogotá 10:30 →
+    15:30Z; Madrid 10:30 → 09:30Z).
+  · El backend recibe la zona y crea el evento con dateTime y timeZone
+    explícitos.
+  · Cambiar la zona en Ajustes afecta a nuevas reuniones.
+
+7.6 Limitaciones actuales de Calendar
+  · Los eventos recurrentes se importan por ocurrencia, pero comparten
+    eventId; borrar una reunión importada puede afectar la serie.
+  · No se importan eventos de día completo.
+  · No se importan enlaces de Meet existentes.
+  · No hay recordatorios/notificaciones propias todavía.
+  · No hay edición de la serie recurrente desde la app.
+
+=======================================================================
+8. SINCRONIZACIÓN
+=======================================================================
+
+  Estrategia: local-first.
+  · Toda acción se guarda primero en localStorage.
+  · Si Google está conectado, se envía en segundo plano.
+  · Si el envío falla, el dato queda local y se muestra una advertencia.
+  · "Sincronizar" hace:
+      1. GET/POST list → descarga tareas, reuniones e hitos.
+      2. Merge por id; gana el registro con "updated" más reciente.
+      3. bulkUpsert con el estado local completo.
+      4. Guarda la fecha de última sincronización.
+  · Los borrados hechos desde la app se envían al backend. Si alguien
+    borra una fila directamente en Sheets, la próxima sincronización
+    puede volver a crearla desde la copia local.
+  · No hay resolución de conflictos avanzada ni tombstones. Para uso
+    personal de un solo dispositivo es suficiente.
+
+=======================================================================
+9. PRUEBAS REALIZADAS
+=======================================================================
+
+Verificado en navegador Chromium integrado (1280×900 y 390×844):
+
+  [x] Carga inicial, favicon, fuentes, logo y metadatos.
+  [x] Navegación entre las 5 vistas y actualización del título.
+  [x] Tema oscuro/claro y persistencia de la preferencia.
+  [x] Crear tarea desde el tablero y desde la terminal.
+  [x] Editar tarea (título, estado, prioridad) y guardar.
+  [x] Mover tarea entre columnas (eventos HTML5 de drag & drop).
+  [x] Eliminar tarea con confirmación apilada.
+  [x] Filtros y orden de la lista de tareas.
+  [x] Métricas coherentes (KPIs, barras, donut, etiquetas).
+  [x] Crear hito, verlo en el roadmap y calcular progreso.
+  [x] Crear reunión sin Google, verla en mes y agenda.
+  [x] Guardar enlace de Meet manual y ver la etiqueta Meet.
+  [x] Enlace de plantilla de Calendar con fechas UTC correctas.
+  [x] Terminal: help, add sin comillas, ls, stats, meet, rm con
+      confirmación, navegación y tema.
+  [x] Ajustes: abrir, validar campos, probar conexión con URL inválida
+      (error controlado), cerrar sin guardar.
+  [x] Persistencia tras recargar la página.
+  [x] Exportación CSV y JSON descargadas correctamente.
+  [x] Importación JSON con merge por id.
+  [x] Responsive en escritorio y móvil (modales, sidebar, tarjetas).
+  [x] Sin errores de JavaScript en los flujos anteriores.
+  [x] Sintaxis de todos los JS y de Code.gs validada con Node.
+  [x] JSON de appsscript.json y site.webmanifest validado.
+
+Pendiente de probar (requiere cuenta Google real):
+  [ ] Despliegue real del Web App y ping contra Google.
+  [ ] Escritura/lectura real en las hojas.
+  [ ] Creación de evento + Meet con Calendar API.
+  [ ] Invitaciones por correo y zona horaria real.
+  [ ] Importación real de eventos.
+  [ ] Sincronización bidireccional con varias filas.
+  [ ] Publicación en GitHub Pages.
+
+=======================================================================
+10. LO QUE FALTA (BACKLOG PRIORIZADO)
+=======================================================================
+
+P0 · Cierre del MVP
+  [ ] Desplegar Code.gs en una cuenta Google y validar los 6 puntos
+      pendientes de la sección 9.
+  [ ] Elegir si el token se mantiene manual o se añade OAuth.
+  [ ] Publicar en GitHub Pages y probar la URL pública.
+  [ ] Limpiar cualquier dato de prueba antes de usar en producción.
+
+P1 · Siguiente fase funcional
+  [ ] Usuarios y autenticación (login, permisos, perfiles).
+  [ ] Multiusuario real: propietario por tarea y filtros por persona.
+  [ ] Notificaciones y recordatorios (correo o push).
+  [ ] Reuniones recurrentes y edición de series.
+  [ ] Historial de estados por tarea para calcular cycle time real.
+  [ ] Sincronización con tombstones y resolución de conflictos.
+  [ ] Pruebas automatizadas (Playwright para flujos + tests de store)
+      y CI en GitHub Actions.
+  [ ] Accesibilidad: revisión con teclado y lector de pantalla.
+
+P2 · Mejoras
+  [ ] Service worker / PWA offline.
+  [ ] Vista semanal y arrastrar reuniones en el calendario.
+  [ ] Exportar calendario a .ics.
+  [ ] Múltiples proyectos/áreas y vistas guardadas.
+  [ ] Adjuntos (Google Drive) en tareas y reuniones.
+  [ ] Etiquetas gestionadas y colores personalizados.
+  [ ] Integración con Slack/WhatsApp/Telegram.
+  [ ] Idioma inglés (i18n) si se requiere.
+  [ ] Analítica de productividad más profunda.
+
+=======================================================================
+11. LIMITACIONES CONOCIDAS
+=======================================================================
+
+  · No hay usuarios ni permisos: es una herramienta personal.
+  · Los datos locales viven en un solo navegador; para otro equipo hay
+    que sincronizar o importar el JSON.
+  · El token de Google se guarda en localStorage. Es aceptable para uso
+    personal; para multiusuario se debe migrar a OAuth.
+  · La sincronización es aditiva; no maneja eliminaciones externas.
+  · Meet automático depende del servicio avanzado Calendar API.
+  · Los eventos de día completo y los enlaces de Meet existentes no se
+    importan.
+  · Las reuniones recurrentes importadas comparten eventId.
+  · No hay recordatorios, notificaciones ni envío de correos propio.
+  · El almacenamiento del navegador ronda los 5 MB.
+  · Probado en Chromium; falta validar Safari y Firefox.
+  · Los campos de fecha usan el formato del navegador.
+  · Sin service worker: requiere conexión para cargar fuentes de Google
+    (los estilos y el sistema de fuentes tienen fallback).
+
+=======================================================================
+12. PUBLICAR EN GITHUB (PASO A PASO)
+=======================================================================
+
+  Requisitos: Git instalado y cuenta de GitHub.
+
+  1. Abrir una terminal en esta carpeta.
+  2. Ejecutar:
+
+        git init
+        git add .
+        git commit -m "Sistema de seguimiento Fundaserinco"
+        git branch -M main
+        git remote add origin https://github.com/<usuario>/<repo>.git
+        git push -u origin main
+
+  3. En GitHub: Settings → Pages → Deploy from a branch → main → / (root).
+  4. Abrir https://<usuario>.github.io/<repo>/ y verificar.
+  5. En Ajustes de la app, volver a pegar la URL y el token de Google
+     (localStorage es por navegador y origen).
+
+  Antes de subir, comprobar:
+    · No hay token ni URL privada en ningún archivo.
+    · .gitignore incluye .env, node_modules, logs y configuración local.
+    · Los logos y favicons están en assets/img.
+
+  Con el uso personal alcanza; no hace falta servidor ni base de datos
+  propia.
+
+=======================================================================
+13. OPERACIÓN DIARIA (GUÍA RÁPIDA)
+=======================================================================
+
+  Crear tarea:
+    Botón "Nueva tarea", tecla n, "+" de una columna o:
+        add "Revisar propuesta" progreso alta 3
+
+  Actualizar:
+    Arrastrar la tarjeta en el tablero o editar desde la lista.
+
+  Reunión:
+    Reuniones → Nueva reunión (o clic en un día).
+    Con Google conectado, dejar activa la casilla de Meet.
+
+  Ver avance:
+    Métricas y Roadmap.
+
+  Respaldo:
+    Ajustes → Exportar JSON.
+
+  Terminal:
+    Ctrl + ` y escribir help.
+
+=======================================================================
+14. SOLUCIÓN DE PROBLEMAS
+=======================================================================
+
+  "Token inválido"
+    · El token de Ajustes no coincide con API_TOKEN en Propiedades del
+      script. Volver a ejecutar instalar o copiar el token del registro.
+
+  "La URL respondió algo distinto a JSON"
+    · La implementación no está publicada con acceso "cualquier
+      persona", o la URL no termina en /exec.
+    · Volver a implementar y copiar la URL correcta.
+
+  "Failed to fetch"
+    · URL equivocada, sin conexión o el Web App no está desplegado.
+    · Probar primero ping desde Ajustes y revisar la implementación.
+
+  No se crea el Meet
+    · Falta el servicio avanzado Google Calendar API. Habilitarlo en
+      Apps Script → Servicios, o revisar appsscript.json.
+    · El evento se crea igual, pero sin Meet; la app muestra la
+      advertencia y permite pegar un enlace manual.
+
+  El evento queda en otra hora
+    · Revisar la zona horaria en Ajustes y la del calendario de Google.
+    · El valor por defecto es America/Bogota.
+
+  Los datos no aparecen en otro navegador
+    · Son locales. Sincronizar con Google o importar el JSON.
+
+  La app no recuerda el tema o los datos
+    · El navegador puede estar bloqueando localStorage (modo privado o
+      políticas). Probar en una ventana normal.
+
+  Cambié Code.gs y no se refleja
+    · Crear una nueva versión de la implementación.
+
+=======================================================================
+15. HISTORIAL
+=======================================================================
+
+  2026-11-23 · v0.1.0
+    · Creación del proyecto y shell con marca Fundaserinco.
+    · Tablero, tareas, métricas, roadmap y reuniones funcionales.
+    · Terminal de comandos funcional.
+    · Persistencia local, respaldos JSON/CSV e importación.
+    · Backend Apps Script para Sheets + Calendar + Meet.
+    · Documentación y pruebas manuales.
+    · Correcciones: conflicto data-view/data-page, codificación UTF-8,
+      formato de fechas, confirmaciones, accesibilidad del terminal,
+      conversión de zonas horarias y enlaces manuales de Meet.
+
+=======================================================================
+ FIN DEL DOCUMENTO
+=======================================================================

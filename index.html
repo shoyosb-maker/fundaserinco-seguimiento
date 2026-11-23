@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fundaserinco · Seguimiento</title>
+  <meta name="description" content="Sistema de seguimiento de proyectos, tareas y reuniones de Fundaserinco.">
+  <meta name="theme-color" content="#0086C8">
+
+  <link rel="icon" href="assets/img/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon-16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="assets/img/favicon-48.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/img/favicon-192.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Fundaserinco · Seguimiento">
+  <meta property="og:description" content="Tablero, tareas, métricas, roadmap y reuniones en un solo lugar.">
+  <meta property="og:image" content="assets/img/og-fundaserinco.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('fs.seguimiento.theme');
+        if (!saved) {
+          saved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', saved);
+        var themeMeta = document.querySelector('meta[name="theme-color"]');
+        if (themeMeta) themeMeta.setAttribute('content', saved === 'dark' ? '#0B101C' : '#0086C8');
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+</head>
+<body>
+  <a class="sr-only" href="#main">Saltar al contenido</a>
+
+  <div class="app">
+    <!-- ============================ Sidebar ============================ -->
+    <aside class="sidebar" id="sidebar" aria-label="Navegación principal">
+      <a class="brand-lockup" href="#/board" aria-label="Fundaserinco · Seguimiento">
+        <img class="brand-lockup__mark" src="assets/img/logo-simbolo.png" alt="Símbolo Fundaserinco">
+        <span class="brand-lockup__text">
+          <span class="brand-lockup__name">Fundaserinco</span>
+          <span class="brand-lockup__sub">Seguimiento</span>
+        </span>
+      </a>
+      <button class="icon-btn sidebar-close" type="button" data-action="toggle-sidebar" aria-label="Cerrar menú">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+
+      <nav class="side-nav">
+        <p class="nav-label">Seguimiento</p>
+        <button class="nav-item" type="button" data-view="board">
+          <span class="material-symbols-outlined">view_kanban</span>
+          <span>Tablero</span>
+          <span class="nav-item__count" data-count="board">0</span>
+        </button>
+        <button class="nav-item" type="button" data-view="tasks">
+          <span class="material-symbols-outlined">checklist</span>
+          <span>Mis tareas</span>
+          <span class="nav-item__count" data-count="tasks">0</span>
+        </button>
+        <button class="nav-item" type="button" data-view="metrics">
+          <span class="material-symbols-outlined">monitoring</span>
+          <span>Métricas</span>
+        </button>
+        <button class="nav-item" type="button" data-view="roadmap">
+          <span class="material-symbols-outlined">route</span>
+          <span>Roadmap</span>
+          <span class="nav-item__count" data-count="roadmap">0</span>
+        </button>
+        <button class="nav-item" type="button" data-view="meetings">
+          <span class="material-symbols-outlined">calendar_month</span>
+          <span>Reuniones</span>
+          <span class="nav-item__count" data-count="meetings">0</span>
+        </button>
+
+        <p class="nav-label">Administración</p>
+        <button class="nav-item" type="button" data-action="open-terminal">
+          <span class="material-symbols-outlined">terminal</span>
+          <span>Terminal</span>
+          <span class="nav-item__count">Ctrl+`</span>
+        </button>
+        <button class="nav-item" type="button" data-action="open-settings">
+          <span class="material-symbols-outlined">settings</span>
+          <span>Ajustes</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-foot">
+        <div class="conn-status" id="conn-status">
+          <span class="conn-status__dot"></span>
+          <span class="conn-status__label" id="conn-label">Modo local</span>
+        </div>
+        <div class="sidebar-version">
+          <span>v0.1.0</span>
+          <span>Brand v1.0</span>
+        </div>
+      </div>
+    </aside>
+    <div class="sidebar-backdrop" id="sidebar-backdrop" hidden></div>
+
+    <!-- ============================= Shell ============================= -->
+    <div class="shell">
+      <header class="topbar">
+        <button class="icon-btn topbar__menu" type="button" data-action="toggle-sidebar" aria-label="Abrir menú">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="topbar__title">
+          <span class="topbar__crumb">Fundaserinco / Seguimiento</span>
+          <h1 class="topbar__heading" id="view-title">Tablero</h1>
+        </div>
+        <div class="topbar__actions">
+          <span class="conn-pill" id="conn-pill" title="Conexión con Google Sheets">
+            <span class="conn-pill__dot"></span>
+            <span id="conn-pill-label">Modo local</span>
+          </span>
+          <button class="icon-btn" type="button" data-action="sync" title="Sincronizar con Google Sheets" aria-label="Sincronizar">
+            <span class="material-symbols-outlined">cloud_sync</span>
+          </button>
+          <button class="icon-btn" type="button" data-action="open-terminal" title="Terminal (Ctrl + `)" aria-label="Abrir terminal">
+            <span class="material-symbols-outlined">terminal</span>
+          </button>
+          <button class="icon-btn" type="button" data-action="toggle-theme" id="theme-toggle" title="Cambiar tema" aria-label="Cambiar tema">
+            <span class="material-symbols-outlined">dark_mode</span>
+          </button>
+          <button class="icon-btn" type="button" data-action="open-settings" title="Ajustes" aria-label="Ajustes">
+            <span class="material-symbols-outlined">settings</span>
+          </button>
+          <button class="btn btn-primary" type="button" data-action="new-task">
+            <span class="material-symbols-outlined">add</span>
+            <span class="btn-label">Nueva tarea</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="main" id="main">
+        <!-- ----------------------------- Tablero ----------------------------- -->
+        <section class="view" data-page="board" id="view-board">
+          <div class="view-head">
+            <div>
+              <h2 class="view-head__title">Tablero de trabajo</h2>
+              <p class="view-head__desc">Arrastra las tarjetas entre columnas para actualizar el estado. Todo se guarda en tu navegador y se puede sincronizar con Google Sheets.</p>
+            </div>
+            <div class="view-head__actions">
+              <button class="btn btn-ghost" type="button" data-action="new-milestone">
+                <span class="material-symbols-outlined">flag</span> Hito
+              </button>
+              <button class="btn btn-primary" type="button" data-action="new-task">
+                <span class="material-symbols-outlined">add</span> Nueva tarea
+              </button>
+            </div>
+          </div>
+
+          <div class="board-toolbar">
+            <div class="search-box">
+              <span class="material-symbols-outlined">search</span>
+              <input id="board-search" type="search" placeholder="Filtrar por título, etiqueta o ID…" aria-label="Filtrar tablero">
+            </div>
+            <select id="board-filter-priority" aria-label="Filtrar por prioridad">
+              <option value="all">Todas las prioridades</option>
+              <option value="urgent">Urgente</option>
+              <option value="high">Alta</option>
+              <option value="medium">Media</option>
+              <option value="low">Baja</option>
+            </select>
+            <select id="board-filter-assignee" aria-label="Filtrar por responsable">
+              <option value="all">Todos los responsables</option>
+            </select>
+            <div class="board-toolbar__meta">
+              <span id="board-points">0 pts</span>
+              <span id="board-progress">0% completado</span>
+            </div>
+          </div>
+
+          <div class="board-scroll">
+            <div class="board-grid" id="board-grid"></div>
+          </div>
+        </section>
+
+        <!-- ------------------------------ Tareas ----------------------------- -->
+        <section class="view" data-page="tasks" id="view-tasks" hidden>
+          <div class="view-head">
+            <div>
+              <h2 class="view-head__title">Mis tareas</h2>
+              <p class="view-head__desc">Lista completa con filtros por estado, prioridad y responsable. Haz clic en una fila para editarla.</p>
+            </div>
+            <div class="view-head__actions">
+              <button class="btn btn-ghost" type="button" data-action="export-csv">
+                <span class="material-symbols-outlined">download</span> Exportar CSV
+              </button>
+              <button class="btn btn-primary" type="button" data-action="new-task">
+                <span class="material-symbols-outlined">add</span> Nueva tarea
+              </button>
+            </div>
+          </div>
+
+          <div class="tasks-toolbar">
+            <div class="search-box">
+              <span class="material-symbols-outlined">search</span>
+              <input id="tasks-search" type="search" placeholder="Buscar tareas…" aria-label="Buscar tareas">
+            </div>
+            <select id="tasks-filter-status" aria-label="Filtrar por estado">
+              <option value="all">Todos los estados</option>
+              <option value="backlog">Backlog</option>
+              <option value="todo">Por hacer</option>
+              <option value="in_progress">En progreso</option>
+              <option value="review">En revisión</option>
+              <option value="done">Hecho</option>
+            </select>
+            <select id="tasks-filter-priority" aria-label="Filtrar por prioridad">
+              <option value="all">Todas las prioridades</option>
+              <option value="urgent">Urgente</option>
+              <option value="high">Alta</option>
+              <option value="medium">Media</option>
+              <option value="low">Baja</option>
+            </select>
+            <select id="tasks-sort" aria-label="Ordenar tareas">
+              <option value="updated">Actualizadas primero</option>
+              <option value="due">Vencimiento</option>
+              <option value="priority">Prioridad</option>
+              <option value="title">Título</option>
+            </select>
+            <span class="tasks-toolbar__count" id="tasks-count">0 tareas</span>
+          </div>
+
+          <div class="task-list" id="task-list"></div>
+        </section>
+
+        <!-- ----------------------------- Métricas ---------------------------- -->
+        <section class="view" data-page="metrics" id="view-metrics" hidden>
+          <div class="view-head">
+            <div>
+              <h2 class="view-head__title">Métricas</h2>
+              <p class="view-head__desc">Indicadores calculados en vivo a partir de tus tareas y reuniones. Sin datos de ejemplo: todo refleja tu trabajo real.</p>
+            </div>
+            <div class="view-head__actions">
+              <button class="btn btn-ghost" type="button" data-action="export-csv">
+                <span class="material-symbols-outlined">download</span> Exportar
+              </button>
+            </div>
+          </div>
+          <div id="metrics-content"></div>
+        </section>
+
+        <!-- ----------------------------- Roadmap ----------------------------- -->
+        <section class="view" data-page="roadmap" id="view-roadmap" hidden>
+          <div class="view-head">
+            <div>
+              <h2 class="view-head__title">Roadmap</h2>
+              <p class="view-head__desc">Hitos de alto nivel ordenados por fecha. La carga mensual se calcula con los vencimientos de tus tareas.</p>
+            </div>
+            <div class="view-head__actions">
+              <button class="btn btn-primary" type="button" data-action="new-milestone">
+                <span class="material-symbols-outlined">add</span> Nuevo hito
+              </button>
+            </div>
+          </div>
+          <div id="roadmap-content"></div>
+        </section>
+
+        <!-- ---------------------------- Reuniones ---------------------------- -->
+        <section class="view" data-page="meetings" id="view-meetings" hidden>
+          <div class="view-head">
+            <div>
+              <h2 class="view-head__title">Reuniones</h2>
+              <p class="view-head__desc">Crea tus propias sesiones. Con Google conectado se generan eventos de Calendar con enlace de Meet; sin conexión puedes usar el enlace de plantilla.</p>
+            </div>
+            <div class="view-head__actions">
+              <button class="btn btn-ghost" type="button" data-action="import-calendar">
+                <span class="material-symbols-outlined">event_available</span> Importar de Google
+              </button>
+              <button class="btn btn-primary" type="button" data-action="new-meeting">
+                <span class="material-symbols-outlined">add</span> Nueva reunión
+              </button>
+            </div>
+          </div>
+
+          <div class="cal-toolbar">
+            <div class="cal-toolbar__nav">
+              <button class="icon-btn" type="button" data-action="cal-prev" aria-label="Mes anterior">
+                <span class="material-symbols-outlined">chevron_left</span>
+              </button>
+              <button class="btn btn-ghost btn-sm" type="button" data-action="cal-today">Hoy</button>
+              <button class="icon-btn" type="button" data-action="cal-next" aria-label="Mes siguiente">
+                <span class="material-symbols-outlined">chevron_right</span>
+              </button>
+              <span class="cal-month-label" id="cal-month-label">—</span>
+            </div>
+            <div class="cal-tabs" role="tablist" aria-label="Vista de calendario">
+              <button class="cal-tab is-active" type="button" data-action="cal-view" data-cal-view="month" role="tab">Mes</button>
+              <button class="cal-tab" type="button" data-action="cal-view" data-cal-view="agenda" role="tab">Agenda</button>
+            </div>
+            <div class="cal-toolbar__spacer"></div>
+            <span class="faint small" id="cal-tz-label"></span>
+          </div>
+
+          <div id="meetings-content"></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- ============================== Terminal ============================== -->
+  <div class="terminal" id="terminal" aria-hidden="true" aria-label="Terminal de comandos">
+    <div class="terminal__bar">
+      <div class="terminal__dots"><span></span><span></span><span></span></div>
+      <span class="terminal__title">fundaserinco — seguimiento — zsh</span>
+      <button class="terminal__close" type="button" data-action="close-terminal" aria-label="Cerrar terminal">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="terminal__body" id="term-body" role="log" aria-live="polite"></div>
+    <div class="term-input-row">
+      <span class="term-input-row__prompt">fundaserinco:~$</span>
+      <input id="term-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Comando" placeholder="Escribe help y pulsa Enter">
+    </div>
+  </div>
+
+  <!-- Modales, toasts y scripts -->
+  <div id="modal-root"></div>
+  <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+
+  <noscript>
+    <div style="padding:24px;font-family:sans-serif">Este sistema necesita JavaScript activado para funcionar.</div>
+  </noscript>
+
+  <script src="js/config.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/terminal.js"></script>
+</body>
+</html>
+

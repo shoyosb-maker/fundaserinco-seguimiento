@@ -1,0 +1,26 @@
+# Archivos del sistema operativo y del editor
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Dependencias y builds (el proyecto es estático, no las necesita)
+node_modules/
+dist/
+build/
+
+# Secretos y configuración local
+.env
+.env.*
+*.local
+google-apps-script/.clasp.json
+
+# Logs y temporales
+*.log
+npm-debug.log*
+tmp/
