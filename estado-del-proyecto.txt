@@ -522,6 +522,10 @@ Verificado en navegador Chromium integrado (390, 768, 1024, 1280,
   [x] Etiquetas <label for> reasociadas al trigger y ARIA del listbox.
   [x] Conexión real con Google: ping y list respondieron ok contra la
       hoja "sistema de seguimiento fundaserinco" (America/Bogota).
+  [x] Datos de ejemplo creados y verificados en la hoja real:
+      8 tareas (las 5 columnas), 5 reuniones demo + la reunión existente
+      y 6 hitos que cubren nov-2026 a mar-2027.
+  [x] Barras de carga del roadmap visibles tras corregir el display.
   [x] Credenciales predeterminadas cargadas desde js/local-config.js
       sin guardar secretos en Git.
   [x] Sin errores de JavaScript en los flujos anteriores.
@@ -692,7 +696,51 @@ P2 · Mejoras
     · Crear una nueva versión de la implementación.
 
 =======================================================================
-15. HISTORIAL
+15. DATOS DE EJEMPLO ACTUALES (23-11-2026)
+=======================================================================
+
+  Se crearon ejemplos para observar el tablero, la agenda y el roadmap
+  tanto en la app como en Google Sheets. Todos los títulos llevan el
+  prefijo [Demo] y la etiqueta demo.
+
+  Tareas (hoja Tareas):
+    FS-001  backlog      Investigar necesidades de usuarios
+    FS-002  todo         Diseñar wireframes del panel
+    FS-003  in_progress  Implementar tablero adaptable
+    FS-004  review       Revisar accesibilidad y contraste
+    FS-005  done         Publicar versión inicial
+    FS-006  in_progress  Conectar Google Sheets
+    FS-007  todo         Preparar manual de uso
+    FS-008  review       Revisar métricas del mes
+
+  Reuniones (hoja Reuniones):
+    MT-001  Revision avances (registro existente, conservado)
+    MT-002  [Demo] Daily de seguimiento
+    MT-003  [Demo] Revisión de diseño
+    MT-004  [Demo] Planificación de sprint
+    MT-005  [Demo] Demo con cliente (meetLink de ejemplo)
+    MT-006  [Demo] Retrospectiva
+
+  Hitos (hoja Hitos):
+    HT-001  [Demo] Descubrimiento completado     2026-11-28  done
+    HT-002  [Demo] Diseño aprobado               2026-12-05  in_progress
+    HT-003  [Demo] Beta interna                  2026-12-20  planned
+    HT-004  [Demo] Lanzamiento v1.0              2027-01-20  planned
+    HT-005  [Demo] Revisión trimestral           2027-03-15  planned
+    HT-006  [Demo] Revisión de mitad de trimestre 2027-02-10 planned
+
+  Notas:
+    · Las reuniones demo solo existen como filas en Sheets; no se crearon
+      eventos en Calendar ni se enviaron invitaciones.
+    · MT-005 contiene un enlace de Meet de ejemplo que no es una sala
+      activa; MT-001 conserva el enlace real que ya tenía.
+    · El roadmap muestra 1/6 hitos completados y carga por vencimiento
+      de 2/4/1 tareas en nov/dic/ene.
+    · Para limpiar los ejemplos: buscar [Demo] o la etiqueta demo en la
+      app y eliminar; también se pueden borrar las filas [Demo] en las
+      hojas. No borrar MT-001 si se quiere conservar la reunión real.
+
+16. HISTORIAL
 =======================================================================
 
   2026-11-23 · v0.2.0
