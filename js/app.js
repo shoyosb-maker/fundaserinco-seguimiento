@@ -1831,6 +1831,7 @@ window.FS = window.FS || {};
         closeTerminal();
         break;
       case 'open-settings':
+        closeSidebar();
         openSettings();
         break;
       case 'close-modal':
@@ -1843,6 +1844,7 @@ window.FS = window.FS || {};
         showTutorial(el.dataset.tutorial);
         break;
       case 'open-apps-script':
+        closeSidebar();
         openAppsScript();
         break;
       case 'new-task':
@@ -1858,9 +1860,11 @@ window.FS = window.FS || {};
         syncNow();
         break;
       case 'pull-google':
+        closeSidebar();
         pullFromGoogle();
         break;
       case 'push-google':
+        closeSidebar();
         pushToGoogle();
         break;
       case 'import-calendar':

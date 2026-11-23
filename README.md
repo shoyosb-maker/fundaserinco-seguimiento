@@ -67,6 +67,7 @@ No hay build ni dependencias que instalar. No se sube ningún secreto: la URL y 
 | **Terminal** | Consola funcional (`Ctrl + \``) para crear/mover/completar tareas, agendar reuniones, consultar métricas y navegar. |
 | **Ajustes** | Conexión con Google, copiar URL/token, exportar/importar conexión, prueba de conexión, descargar de Google, subir a Google, respaldo/importación JSON y borrado de datos locales. |
 | **Apps Script** | Ventana emergente desde el menú lateral con la URL y el token editables, botones para copiar cada uno o ambos, descargar un TXT, importar conexión, guardar y acceso directo a Ajustes. |
+| **Google (menú lateral)** | **Descargar de Google** y **Subir a Google** también en el menú lateral, visibles en escritorio y móvil. |
 
 ### Atajos
 
@@ -160,6 +161,7 @@ La app funciona en modo local desde el primer momento. Para usar Google:
 - **Descargar de Google** (nube hacia abajo): trae tareas, reuniones e hitos de la hoja y los mezcla con los locales por id y fecha. No envía nada a Google.
 - **Subir a Google** (nube hacia arriba): envía el estado de este navegador a la hoja. Pide confirmación y no borra filas que no existan en la app.
 - El comando `sync` de la terminal sigue haciendo ambas operaciones.
+- En móvil, las dos acciones también están en el menú lateral, sección **Google**.
 
 Con eso:
 

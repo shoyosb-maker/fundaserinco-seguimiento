@@ -3,7 +3,7 @@
  ESTADO DEL PROYECTO
 =======================================================================
 Última actualización : 23 de noviembre de 2026
-Versión             : 0.2.7
+Versión             : 0.2.8
 Estado general      : MVP funcional. Backend de Google desplegado y
                       conectado (ping y list verificados contra la hoja
                       real). Pendiente probar la creación real de eventos
@@ -233,6 +233,8 @@ servidor estático o publicar directamente en GitHub Pages.
     locales; no envía nada.
   · Subir a Google: envía el estado local a la hoja con confirmación;
     no borra filas que no estén en la app.
+  · Ambas acciones también están en el menú lateral, sección Google,
+    visibles en escritorio y móvil; al pulsarlas se cierra el menú.
   · Exportar JSON completo.
   · Importar JSON (merge por id).
   · Borrar todos los datos locales (con confirmación; no toca Sheets).
@@ -592,6 +594,8 @@ Verificado en navegador Chromium integrado (390, 768, 1024, 1280,
   [x] Subir sin datos muestra un aviso y no abre confirmación.
   [x] Botones separados de descarga y subida en la barra superior y en
       Ajustes, sin desbordamiento a 390 px.
+  [x] Sección Google del menú lateral visible en móvil; Descargar y
+      Subir cierran el menú y ejecutan solo su acción.
   [x] Credenciales predeterminadas cargadas desde js/local-config.js
       sin guardar secretos en Git.
   [x] Sin errores de JavaScript en los flujos anteriores.
@@ -779,6 +783,12 @@ P2 · Mejoras
 
 16. HISTORIAL
 =======================================================================
+
+  2026-11-23 · v0.2.8
+    · Sección Google en el menú lateral con Descargar de Google y Subir
+      a Google, visible también en móvil.
+    · Al elegir una acción se cierra el menú lateral.
+    · Cache busting actualizado a 20261123-12.
 
   2026-11-23 · v0.2.7
     · Botones separados para Descargar de Google y Subir a Google en la
