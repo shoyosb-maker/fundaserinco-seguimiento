@@ -3,7 +3,7 @@
  ESTADO DEL PROYECTO
 =======================================================================
 Última actualización : 23 de noviembre de 2026
-Versión             : 0.2.6
+Versión             : 0.2.7
 Estado general      : MVP funcional. Backend de Google desplegado y
                       conectado (ping y list verificados contra la hoja
                       real). Pendiente probar la creación real de eventos
@@ -229,7 +229,10 @@ servidor estático o publicar directamente en GitHub Pages.
     interfaz advierte que no debe subirse a GitHub.
   · Interruptor "Crear Meet por defecto".
   · Probar conexión (ping real) con mensaje de éxito/error.
-  · Sincronizar ahora.
+  · Descargar de Google: trae los datos de la hoja y los mezcla con los
+    locales; no envía nada.
+  · Subir a Google: envía el estado local a la hoja con confirmación;
+    no borra filas que no estén en la app.
   · Exportar JSON completo.
   · Importar JSON (merge por id).
   · Borrar todos los datos locales (con confirmación; no toca Sheets).
@@ -504,14 +507,19 @@ servidor estático o publicar directamente en GitHub Pages.
   · Toda acción se guarda primero en localStorage.
   · Si Google está conectado, se envía en segundo plano.
   · Si el envío falla, el dato queda local y se muestra una advertencia.
-  · "Sincronizar" hace:
-      1. GET/POST list → descarga tareas, reuniones e hitos.
+  · Descargar de Google:
+      1. list → descarga tareas, reuniones e hitos.
       2. Merge por id; gana el registro con "updated" más reciente.
-      3. bulkUpsert con el estado local completo.
+      3. No envía nada a la hoja.
+  · Subir a Google:
+      1. bulkUpsert con el estado local completo.
+      2. Pide confirmación y muestra el conteo enviado.
+      3. No borra filas que no estén en la app.
       4. Guarda la fecha de última sincronización.
+  · El comando sync de la terminal hace descarga + subida.
   · Los borrados hechos desde la app se envían al backend. Si alguien
-    borra una fila directamente en Sheets, la próxima sincronización
-    puede volver a crearla desde la copia local.
+    borra una fila directamente en Sheets, una descarga puede volver a
+    crearla desde la copia local.
   · No hay resolución de conflictos avanzada ni tombstones. Para uso
     personal de un solo dispositivo es suficiente.
 
@@ -578,6 +586,12 @@ Verificado en navegador Chromium integrado (390, 768, 1024, 1280,
       de edición, con confirmación y sin afectar Google si no hay
       evento asociado.
   [x] Tarjetas de reunión con tres acciones sin desbordamiento a 390 px.
+  [x] Subir a Google envía la tarea local, pide confirmación y guarda
+      la fecha de última sincronización.
+  [x] Descargar de Google recupera la tarea remota sin enviar datos.
+  [x] Subir sin datos muestra un aviso y no abre confirmación.
+  [x] Botones separados de descarga y subida en la barra superior y en
+      Ajustes, sin desbordamiento a 390 px.
   [x] Credenciales predeterminadas cargadas desde js/local-config.js
       sin guardar secretos en Git.
   [x] Sin errores de JavaScript en los flujos anteriores.
@@ -765,6 +779,13 @@ P2 · Mejoras
 
 16. HISTORIAL
 =======================================================================
+
+  2026-11-23 · v0.2.7
+    · Botones separados para Descargar de Google y Subir a Google en la
+      barra superior y en Ajustes.
+    · La descarga solo mezcla datos remotos; la subida solo envía el
+      estado local con confirmación.
+    · Cache busting actualizado a 20261123-11.
 
   2026-11-23 · v0.2.6
     · Botón de papelera en cada tarjeta de la agenda para eliminar

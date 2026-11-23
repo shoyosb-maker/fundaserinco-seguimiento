@@ -65,7 +65,7 @@ No hay build ni dependencias que instalar. No se sube ningún secreto: la URL y 
 | **Reuniones** | Calendario mensual y agenda, reuniones propias, eliminación directa desde la agenda, categorías, invitados, notas, plantilla de Google Calendar y Meet. |
 | **Guías por sección** | Cada vista incluye una tarjeta de ayuda con 4 pasos. Se oculta con la X y se reabre con el botón **Guía**; el estado se recuerda por sección. |
 | **Terminal** | Consola funcional (`Ctrl + \``) para crear/mover/completar tareas, agendar reuniones, consultar métricas y navegar. |
-| **Ajustes** | Conexión con Google, copiar URL/token, exportar/importar conexión, prueba de conexión, sincronización, respaldo/importación JSON y borrado de datos locales. |
+| **Ajustes** | Conexión con Google, copiar URL/token, exportar/importar conexión, prueba de conexión, descargar de Google, subir a Google, respaldo/importación JSON y borrado de datos locales. |
 | **Apps Script** | Ventana emergente desde el menú lateral con la URL y el token editables, botones para copiar cada uno o ambos, descargar un TXT, importar conexión, guardar y acceso directo a Ajustes. |
 
 ### Atajos
@@ -154,6 +154,12 @@ La app funciona en modo local desde el primer momento. Para usar Google:
    - Quién tiene acceso: **cualquier persona**
 6. Copia la URL que termina en `/exec`.
 7. En la app: **Ajustes → Conexión con Google**, pega la URL y el token, guarda y pulsa **Probar conexión**.
+
+### Descargar y subir por separado
+
+- **Descargar de Google** (nube hacia abajo): trae tareas, reuniones e hitos de la hoja y los mezcla con los locales por id y fecha. No envía nada a Google.
+- **Subir a Google** (nube hacia arriba): envía el estado de este navegador a la hoja. Pide confirmación y no borra filas que no existan en la app.
+- El comando `sync` de la terminal sigue haciendo ambas operaciones.
 
 Con eso:
 

@@ -1355,9 +1355,11 @@ window.FS = window.FS || {};
         '<div id="settings-test-result" style="margin-top:12px"></div>' +
         '<div class="field-row" style="margin-top:12px;flex-wrap:wrap">' +
           '<button class="btn btn-ghost btn-sm" type="button" id="settings-test">' + icon('network_check') + ' Probar conexión</button>' +
-          '<button class="btn btn-ghost btn-sm" type="button" id="settings-sync">' + icon('cloud_sync') + ' Sincronizar ahora</button>' +
+          '<button class="btn btn-ghost btn-sm" type="button" id="settings-pull">' + icon('cloud_download') + ' Descargar de Google</button>' +
+          '<button class="btn btn-ghost btn-sm" type="button" id="settings-push">' + icon('cloud_upload') + ' Subir a Google</button>' +
           '<span class="faint small" style="margin-left:auto">' + (online ? 'Conectado' : 'Sin verificar') + '</span>' +
         '</div>' +
+        '<p class="faint small" style="margin-top:6px">Descargar trae los datos de la hoja a este navegador. Subir envía los datos de este navegador a la hoja; no borra filas que no estén en la app.</p>' +
         '<details class="settings-block" style="margin-top:14px">' +
           '<summary>' + icon('menu_book') + 'Cómo conectar Google Sheets y Calendar</summary>' +
           '<ol>' +
@@ -1504,10 +1506,16 @@ window.FS = window.FS || {};
       }).finally(function () { btn.disabled = false; });
     });
 
-    handle.root.querySelector('#settings-sync').addEventListener('click', function () {
+    handle.root.querySelector('#settings-pull').addEventListener('click', function () {
       FS.saveSettings(readSettings());
       handle.close();
-      syncNow();
+      pullFromGoogle();
+    });
+
+    handle.root.querySelector('#settings-push').addEventListener('click', function () {
+      FS.saveSettings(readSettings());
+      handle.close();
+      pushToGoogle();
     });
 
     handle.root.querySelector('#settings-export').addEventListener('click', exportJson);
@@ -1570,6 +1578,80 @@ window.FS = window.FS || {};
     });
   }
 
+  function pullFromGoogle(silent) {
+    if (!FS.isConfigured()) {
+      if (!silent) {
+        toast('Configura primero la URL y el token en Ajustes.', 'warn');
+        openSettings();
+      }
+      return Promise.resolve(null);
+    }
+    if (!silent) toast('Descargando de Google Sheets…', 'info');
+    return api.list().then(function (data) {
+      var counts = store.mergeRemote(data || {});
+      setConnection('online');
+      render();
+      var total = counts.tasks + counts.meetings + counts.milestones;
+      if (!silent) {
+        toast(total
+          ? 'Descargado: ' + counts.tasks + ' tareas, ' + counts.meetings + ' reuniones, ' + counts.milestones + ' hitos.'
+          : 'No había novedades en Google Sheets.', total ? 'ok' : 'info');
+      }
+      return counts;
+    }).catch(function (err) {
+      setConnection('error', err.message);
+      toast('Error al descargar de Google: ' + err.message, 'err');
+      throw err;
+    });
+  }
+
+  function pushToGoogle(skipConfirm) {
+    if (!FS.isConfigured()) {
+      if (!skipConfirm) {
+        toast('Configura primero la URL y el token en Ajustes.', 'warn');
+        openSettings();
+      }
+      return Promise.resolve(null);
+    }
+    var state = store.getState();
+    var total = state.tasks.length + state.meetings.length + state.milestones.length;
+    if (!total) {
+      if (!skipConfirm) toast('No hay datos para subir.', 'warn');
+      return Promise.resolve(null);
+    }
+
+    function doPush() {
+      var current = store.getState();
+      toast('Subiendo a Google Sheets…', 'info');
+      return api.bulkUpsert({
+        tasks: current.tasks,
+        meetings: current.meetings,
+        milestones: current.milestones
+      }).then(function (result) {
+        store.markSynced();
+        setConnection('online');
+        render();
+        var c = result || {};
+        toast('Subido: ' + (c.tasks || 0) + ' tareas, ' + (c.meetings || 0) + ' reuniones, ' + (c.milestones || 0) + ' hitos.', 'ok');
+        return result;
+      }).catch(function (err) {
+        setConnection('error', err.message);
+        toast('Error al subir a Google: ' + err.message, 'err');
+        throw err;
+      });
+    }
+
+    if (skipConfirm) return doPush();
+    return confirmDialog({
+      title: 'Subir a Google Sheets',
+      message: 'Se enviarán ' + state.tasks.length + ' tareas, ' + state.meetings.length + ' reuniones y ' + state.milestones.length + ' hitos de este navegador a la hoja. Las filas que no estén en la app no se borran.',
+      confirmLabel: 'Subir',
+      danger: false
+    }).then(function (ok) {
+      return ok ? doPush() : null;
+    });
+  }
+
   function syncNow() {
     if (!FS.isConfigured()) {
       toast('Configura primero la URL y el token en Ajustes.', 'warn');
@@ -1577,23 +1659,12 @@ window.FS = window.FS || {};
       return;
     }
     toast('Sincronizando con Google Sheets…', 'info');
-    api.list().then(function (data) {
-      var counts = store.mergeRemote(data || {});
-      var state = store.getState();
-      return api.bulkUpsert({
-        tasks: state.tasks,
-        meetings: state.meetings,
-        milestones: state.milestones
-      }).then(function () {
-        store.markSynced();
-        setConnection('online');
-        render();
-        toast('Sincronizado. Descargados: ' + counts.tasks + ' tareas, ' + counts.meetings + ' reuniones, ' + counts.milestones + ' hitos.', 'ok');
+    return pullFromGoogle(true).then(function (counts) {
+      if (!counts) return null;
+      return pushToGoogle(true).then(function () {
+        toast('Sincronización completa.', 'ok');
       });
-    }).catch(function (err) {
-      setConnection('error', err.message);
-      toast('Error al sincronizar: ' + err.message, 'err');
-    });
+    }).catch(function () { /* los avisos ya se muestran en cada paso */ });
   }
 
   function importCalendar() {
@@ -1785,6 +1856,12 @@ window.FS = window.FS || {};
         break;
       case 'sync':
         syncNow();
+        break;
+      case 'pull-google':
+        pullFromGoogle();
+        break;
+      case 'push-google':
+        pushToGoogle();
         break;
       case 'import-calendar':
         importCalendar();
@@ -2007,6 +2084,8 @@ window.FS = window.FS || {};
     openTerminal: openTerminal,
     closeTerminal: closeTerminal,
     syncNow: syncNow,
+    pullFromGoogle: pullFromGoogle,
+    pushToGoogle: pushToGoogle,
     exportJson: exportJson,
     exportCsv: exportCsv,
     refreshConnection: refreshConnection,

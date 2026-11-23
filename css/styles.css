@@ -1584,6 +1584,8 @@ details.settings-block code {
 
 @media (max-width: 520px) {
   .topbar__actions [data-action="sync"],
+  .topbar__actions [data-action="pull-google"],
+  .topbar__actions [data-action="push-google"],
   .topbar__actions [data-action="open-terminal"],
   .topbar__actions [data-action="open-settings"] { display: none; }
   .main { padding: 16px 12px 40px; }

@@ -4,7 +4,7 @@ window.FS = window.FS || {};
 (function (FS) {
   'use strict';
 
-  FS.APP_VERSION = '0.2.6';
+  FS.APP_VERSION = '0.2.7';
 
   FS.STORAGE = {
     data: 'fs.seguimiento.data.v1',
