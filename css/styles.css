@@ -1418,6 +1418,9 @@ select {
 }
 .field__hint { font-size: 10.5px; color: var(--faint); line-height: 1.4; }
 .field-row { display: flex; gap: 8px; align-items: center; }
+.field__with-btn { display: flex; align-items: center; gap: 8px; }
+.field__with-btn input { flex: 1 1 auto; min-width: 0; }
+.field__with-btn .btn { flex: 0 0 auto; }
 
 .switch-row {
   display: flex; align-items: flex-start; gap: 10px;
@@ -1559,6 +1562,8 @@ details.settings-block code {
   .tutorial__icon { width: 34px; height: 34px; }
   .tutorial__title { font-size: 12.5px; }
   .tutorial__steps { grid-template-columns: 1fr; }
+  .field__with-btn .btn-label { display: none; }
+  .field__with-btn .btn { width: 36px; padding: 0; justify-content: center; }
   .cal-month-label { min-width: 0; font-size: 15px; }
   .cal-day { min-height: 84px; padding: 4px; }
   .cal-day__num { width: 20px; height: 20px; font-size: 10px; }

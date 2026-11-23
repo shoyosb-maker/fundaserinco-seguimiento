@@ -1159,10 +1159,16 @@ window.FS = window.FS || {};
         '<div class="section-title">' + icon('cloud') + 'Conexión con Google</div>' +
         '<div class="form-grid">' +
           '<div class="field field--full"><label for="settings-url">URL del Web App (Apps Script)</label>' +
-            '<input id="settings-url" name="apiUrl" value="' + esc(s.apiUrl) + '" placeholder="https://script.google.com/macros/s/…/exec">' +
+            '<div class="field__with-btn">' +
+              '<input id="settings-url" name="apiUrl" value="' + esc(s.apiUrl) + '" placeholder="https://script.google.com/macros/s/…/exec">' +
+              '<button class="btn btn-ghost btn-sm" type="button" data-copy-field="apiUrl" aria-label="Copiar URL" title="Copiar URL">' + icon('content_copy') + '<span class="btn-label">Copiar</span></button>' +
+            '</div>' +
             '<span class="field__hint">Termina en <code>/exec</code>. Se obtiene al implementar el script como aplicación web.</span></div>' +
           '<div class="field field--full"><label for="settings-token">Token de acceso</label>' +
-            '<input id="settings-token" name="token" value="' + esc(s.token) + '" placeholder="Token generado por la función instalar()" autocomplete="off">' +
+            '<div class="field__with-btn">' +
+              '<input id="settings-token" name="token" value="' + esc(s.token) + '" placeholder="Token generado por la función instalar()" autocomplete="off" spellcheck="false">' +
+              '<button class="btn btn-ghost btn-sm" type="button" data-copy-field="token" aria-label="Copiar token" title="Copiar token">' + icon('content_copy') + '<span class="btn-label">Copiar</span></button>' +
+            '</div>' +
             '<span class="field__hint">Se guarda solo en este navegador (localStorage). No lo subas a GitHub.</span></div>' +
           '<div class="field"><label for="settings-calendar">ID de calendario</label><input id="settings-calendar" name="calendarId" value="' + esc(s.calendarId) + '" placeholder="primary"><span class="field__hint"><code>primary</code> es tu calendario principal.</span></div>' +
           '<div class="field"><label for="settings-timezone">Zona horaria</label><select id="settings-timezone" name="timezone">' +
@@ -1172,8 +1178,14 @@ window.FS = window.FS || {};
             '<span class="switch-row__text"><span class="switch-row__title">Crear Meet por defecto</span>' +
             '<span class="switch-row__hint">Marca la casilla automáticamente al crear reuniones cuando Google esté conectado.</span></span></label></div>' +
         '</div>' +
+        '<div class="field-row" style="margin-top:12px;flex-wrap:wrap">' +
+          '<button class="btn btn-ghost btn-sm" type="button" id="settings-export-connection">' + icon('download') + ' Exportar conexión</button>' +
+          '<button class="btn btn-ghost btn-sm" type="button" id="settings-import-connection">' + icon('upload') + ' Importar conexión</button>' +
+          '<input type="file" id="settings-connection-file" accept="application/json,.json" hidden>' +
+        '</div>' +
+        '<p class="faint small" style="margin:6px 0 0">El archivo de conexión contiene el token. Guárdalo en un lugar privado y no lo subas a GitHub.</p>' +
         '<div id="settings-test-result" style="margin-top:12px"></div>' +
-        '<div class="field-row" style="margin-top:12px">' +
+        '<div class="field-row" style="margin-top:12px;flex-wrap:wrap">' +
           '<button class="btn btn-ghost btn-sm" type="button" id="settings-test">' + icon('network_check') + ' Probar conexión</button>' +
           '<button class="btn btn-ghost btn-sm" type="button" id="settings-sync">' + icon('cloud_sync') + ' Sincronizar ahora</button>' +
           '<span class="faint small" style="margin-left:auto">' + (online ? 'Conectado' : 'Sin verificar') + '</span>' +
@@ -1227,6 +1239,76 @@ window.FS = window.FS || {};
         meetByDefault: form.meetByDefault.checked
       };
     }
+
+    Array.prototype.forEach.call(handle.root.querySelectorAll('[data-copy-field]'), function (btn) {
+      btn.addEventListener('click', function () {
+        var field = form.elements[btn.getAttribute('data-copy-field')];
+        var value = field ? field.value.trim() : '';
+        if (!value) {
+          toast('No hay nada que copiar todavía.', 'warn');
+          return;
+        }
+        U.copy(value).then(function () {
+          toast(btn.getAttribute('data-copy-field') === 'token' ? 'Token copiado.' : 'URL copiada.', 'ok');
+        }).catch(function () {
+          toast('No se pudo copiar. Selecciona el texto manualmente.', 'warn');
+        });
+      });
+    });
+
+    handle.root.querySelector('#settings-export-connection').addEventListener('click', function () {
+      var values = readSettings();
+      if (!values.apiUrl || !values.token) {
+        toast('Completa la URL y el token antes de exportar.', 'warn');
+        return;
+      }
+      U.download('fundaserinco-conexion.json', JSON.stringify({
+        type: 'fundaserinco-connection',
+        version: 1,
+        exported: new Date().toISOString(),
+        settings: values
+      }, null, 2), 'application/json');
+      toast('Conexión exportada. Contiene el token: guárdala en un lugar privado.', 'ok');
+    });
+
+    handle.root.querySelector('#settings-import-connection').addEventListener('click', function () {
+      handle.root.querySelector('#settings-connection-file').click();
+    });
+
+    handle.root.querySelector('#settings-connection-file').addEventListener('change', function (e) {
+      var input = e.target;
+      var file = input.files && input.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        try {
+          var data = JSON.parse(reader.result);
+          var s = data && data.settings ? data.settings : data;
+          if (!s || typeof s !== 'object' || typeof s.apiUrl !== 'string' || !s.apiUrl.trim()) {
+            throw new Error('El archivo no contiene una URL válida.');
+          }
+          if (typeof s.token !== 'string' || !s.token.trim()) {
+            throw new Error('El archivo no contiene el token.');
+          }
+          form.apiUrl.value = s.apiUrl.trim();
+          form.token.value = s.token.trim();
+          form.calendarId.value = typeof s.calendarId === 'string' && s.calendarId.trim() ? s.calendarId.trim() : 'primary';
+          if (typeof s.timezone === 'string' && s.timezone) form.timezone.value = s.timezone;
+          form.meetByDefault.checked = Boolean(s.meetByDefault);
+          if (FS.glass) FS.glass.refresh(form.timezone);
+          FS.saveSettings(readSettings());
+          result.innerHTML = '<div class="callout callout--ok">' + icon('check_circle') +
+            '<div><strong>Conexión importada.</strong> Ya está guardada en este navegador. Usa <em>Probar conexión</em> para verificarla.</div></div>';
+          refreshConnection(true);
+          toast('Conexión importada y guardada.', 'ok');
+        } catch (err) {
+          toast('No se pudo importar la conexión: ' + err.message, 'err');
+        } finally {
+          input.value = '';
+        }
+      };
+      reader.readAsText(file);
+    });
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();

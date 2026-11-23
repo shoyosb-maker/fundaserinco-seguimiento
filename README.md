@@ -65,7 +65,7 @@ No hay build ni dependencias que instalar. No se sube ningún secreto: la URL y 
 | **Reuniones** | Calendario mensual y agenda, reuniones propias (los registros `[Demo]` se pueden borrar), categorías, invitados, notas, plantilla de Google Calendar y Meet. |
 | **Guías por sección** | Cada vista incluye una tarjeta de ayuda con 4 pasos. Se oculta con la X y se reabre con el botón **Guía**; el estado se recuerda por sección. |
 | **Terminal** | Consola funcional (`Ctrl + \``) para crear/mover/completar tareas, agendar reuniones, consultar métricas y navegar. |
-| **Ajustes** | Conexión con Google, prueba de conexión, sincronización, respaldo/importación JSON y borrado de datos locales. |
+| **Ajustes** | Conexión con Google, copiar URL/token, exportar/importar conexión, prueba de conexión, sincronización, respaldo/importación JSON y borrado de datos locales. |
 
 ### Atajos
 
@@ -119,6 +119,25 @@ Completa `apiUrl` y `token` en `js/local-config.js`. Ese archivo:
 Si el archivo no existe, la app arranca en modo local sin errores
 funcionales (el navegador puede registrar un 404 por el script opcional).
 
+### Pasar la conexión a GitHub Pages sin publicar el token
+
+El token no debe subirse al repositorio: GitHub Pages es público y
+cualquiera podría escribir en la hoja. Para configurar la página
+publicada sin escribirlo a mano:
+
+1. En la copia local, abre **Ajustes** y pulsa **Exportar conexión**.
+   Se descarga `fundaserinco-conexion.json`.
+2. En la página de GitHub Pages, abre **Ajustes** y pulsa
+   **Importar conexión**; selecciona ese archivo.
+3. La conexión se guarda solo en ese navegador. Puedes usar
+   **Probar conexión** para verificarla.
+
+El archivo contiene el token. Guárdalo en un lugar privado y no lo subas
+a GitHub (ya está incluido en `.gitignore`). Como alternativa, usa los
+botones **Copiar** junto a la URL y al token y pégalos una vez en la
+página publicada; después quedan visibles y guardados en **Ajustes** de
+ese navegador.
+
 ---
 
 ## 5. Conectar Google Sheets y Google Calendar
@@ -153,6 +172,7 @@ La guía completa, con contrato de la API, columnas de las hojas y solución de 
 
 - Los datos viven en `localStorage` de tu navegador.
 - La URL y el token de Google se guardan en `js/local-config.js` (ignorado por Git) y/o en `localStorage`; nunca se versionan.
+- El archivo `fundaserinco-conexion.json` que genera **Exportar conexión** contiene el token. No lo subas a GitHub; también está en `.gitignore`.
 - Cualquier persona con la URL `/exec` y el token puede escribir en la hoja. Trata el token como una contraseña.
 - La app aún no tiene usuarios ni autenticación (pendiente acordado).
 - Al actualizar CSS/JS se usa un parámetro `?v=` para evitar caché antigua.

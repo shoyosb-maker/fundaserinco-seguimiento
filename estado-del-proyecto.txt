@@ -3,7 +3,7 @@
  ESTADO DEL PROYECTO
 =======================================================================
 Última actualización : 23 de noviembre de 2026
-Versión             : 0.2.1
+Versión             : 0.2.2
 Estado general      : MVP funcional. Backend de Google desplegado y
                       conectado (ping y list verificados contra la hoja
                       real). Pendiente probar la creación real de eventos
@@ -218,6 +218,13 @@ servidor estático o publicar directamente en GitHub Pages.
 
 4.8 Ajustes
   · URL del Web App, token, ID de calendario y zona horaria.
+  · Botones Copiar junto a la URL y al token.
+  · Exportar conexión: descarga fundaserinco-conexion.json con URL,
+    token, calendario, zona horaria y Meet por defecto.
+  · Importar conexión: valida el archivo, rellena el formulario,
+    actualiza el desplegable glass de zona horaria y guarda los ajustes.
+  · El archivo de conexión contiene el token; está en .gitignore y la
+    interfaz advierte que no debe subirse a GitHub.
   · Interruptor "Crear Meet por defecto".
   · Probar conexión (ping real) con mensaje de éxito/error.
   · Sincronizar ahora.
@@ -541,6 +548,12 @@ Verificado en navegador Chromium integrado (390, 768, 1024, 1280,
       foco y realce).
   [x] Sin scroll horizontal con la guía abierta a 390, 768, 1024,
       1440 y 1920 px.
+  [x] Exportar conexión genera un JSON con URL, token y preferencias.
+  [x] Importar conexión rellena y guarda los campos, actualiza el
+      desplegable glass de zona horaria y rechaza archivos sin token.
+  [x] Botones Copiar URL y Copiar token funcionan con clic real.
+  [x] Ajustes sin scroll horizontal a 390 px tras el ajuste de la fila
+      de acciones.
   [x] Credenciales predeterminadas cargadas desde js/local-config.js
       sin guardar secretos en Git.
   [x] Sin errores de JavaScript en los flujos anteriores.
@@ -757,6 +770,15 @@ P2 · Mejoras
 
 16. HISTORIAL
 =======================================================================
+
+  2026-11-23 · v0.2.2
+    · Botones para copiar URL y token desde Ajustes.
+    · Exportar/importar conexión en JSON para configurar GitHub Pages
+      sin publicar el token; el archivo queda en .gitignore.
+    · Validación de archivos de conexión y refresco del desplegable de
+      zona horaria tras importar.
+    · Fila de acciones de Ajustes con ajuste en móvil.
+    · Cache busting actualizado a 20261123-6.
 
   2026-11-23 · v0.2.1
     · Guías rápidas en las 5 vistas con 4 pasos cada una.
