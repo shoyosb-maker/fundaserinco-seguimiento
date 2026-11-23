@@ -21,6 +21,7 @@ build/
 google-apps-script/.clasp.json
 js/local-config.js
 fundaserinco-conexion*.json
+fundaserinco-apps-script*.txt
 
 # Logs y temporales
 *.log

@@ -1173,11 +1173,12 @@ window.FS = window.FS || {};
           '</div></div>' +
       '</div>' +
       '<div class="field-row" style="margin-top:12px;flex-wrap:wrap">' +
+        '<button class="btn btn-ghost btn-sm" type="button" id="apps-download">' + icon('download') + ' Descargar TXT</button>' +
         '<button class="btn btn-ghost btn-sm" type="button" id="apps-import">' + icon('upload') + ' Importar conexión</button>' +
         '<input type="file" id="apps-file" accept="application/json,.json" hidden>' +
         '<button class="btn btn-ghost btn-sm" type="button" id="apps-open-settings">' + icon('settings') + ' Más opciones en Ajustes</button>' +
       '</div>' +
-      '<p class="faint small" style="margin:10px 0 0">El token es equivalente a una contraseña: cualquiera que lo tenga puede escribir en la hoja y en el calendario.</p>';
+      '<p class="faint small" style="margin:10px 0 0">El TXT descargado contiene el token. El token es equivalente a una contraseña: cualquiera que lo tenga puede escribir en la hoja y en el calendario.</p>';
 
     var foot =
       '<button class="btn btn-ghost" type="button" data-action="close-modal">Cerrar</button>' +
@@ -1247,6 +1248,21 @@ window.FS = window.FS || {};
       handle.close();
       openAppsScript();
       toast('Conexión guardada en este navegador.', 'ok');
+    });
+
+    handle.root.querySelector('#apps-download').addEventListener('click', function () {
+      var values = readInputs();
+      if (!values.apiUrl || !values.token) {
+        toast('Faltan la URL o el token para descargar.', 'warn');
+        return;
+      }
+      var text = 'Fundaserinco · Seguimiento\n' +
+        'Conexión Apps Script\n\n' +
+        'URL del Web App:\n' + values.apiUrl + '\n\n' +
+        'Token de acceso:\n' + values.token + '\n\n' +
+        'Generado: ' + new Date().toLocaleString('es-CO') + '\n';
+      U.download('fundaserinco-apps-script.txt', text, 'text/plain;charset=utf-8');
+      toast('TXT descargado. Contiene el token: guárdalo en un lugar privado.', 'ok');
     });
 
     handle.root.querySelector('#apps-import').addEventListener('click', function () {
