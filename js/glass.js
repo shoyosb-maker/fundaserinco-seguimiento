@@ -21,6 +21,10 @@ window.FS = window.FS || {};
     var state = wrap.__glass;
     var option = select.options[select.selectedIndex];
     state.valueEl.textContent = option ? option.textContent : '';
+    var baseLabel = state.trigger.getAttribute('data-label');
+    if (baseLabel) {
+      state.trigger.setAttribute('aria-label', baseLabel + (option ? ': ' + option.textContent : ''));
+    }
     state.trigger.disabled = select.disabled;
     wrap.classList.toggle('is-disabled', select.disabled);
   }
@@ -164,14 +168,16 @@ window.FS = window.FS || {};
     for (var i = 0; i < labels.length; i++) {
       if (labels[i].getAttribute('for') === select.id) {
         labels[i].setAttribute('for', trigger.id);
-        if (!trigger.getAttribute('aria-label')) {
-          trigger.setAttribute('aria-label', labels[i].textContent.replace(/\s+/g, ' ').trim());
-        }
+        var labelText = labels[i].textContent.replace(/\s+/g, ' ').trim();
+        trigger.setAttribute('data-label', labelText);
+        trigger.setAttribute('aria-label', labelText);
         break;
       }
     }
     if (!trigger.getAttribute('aria-label') && select.getAttribute('aria-label')) {
-      trigger.setAttribute('aria-label', select.getAttribute('aria-label'));
+      var selectLabel = select.getAttribute('aria-label');
+      trigger.setAttribute('data-label', selectLabel);
+      trigger.setAttribute('aria-label', selectLabel);
     }
 
     wrap.__glass = {
