@@ -131,6 +131,7 @@ window.FS = window.FS || {};
         (opts.foot ? '<div class="modal__foot">' + opts.foot + '</div>' : '') +
       '</div>';
     $('#modal-root').appendChild(backdrop);
+    if (FS.glass) FS.glass.enhance(backdrop);
     document.body.style.overflow = 'hidden';
 
     var handle = {
@@ -393,6 +394,7 @@ window.FS = window.FS || {};
       current = 'all';
     }
     select.value = current;
+    if (FS.glass) FS.glass.refresh(select);
   }
 
   /* --------------------------------- Tareas -------------------------------- */
@@ -1544,6 +1546,11 @@ window.FS = window.FS || {};
         $('#tasks-filter-status').value = 'all';
         $('#tasks-filter-priority').value = 'all';
         $('#tasks-sort').value = 'updated';
+        if (FS.glass) {
+          FS.glass.refresh($('#tasks-filter-status'));
+          FS.glass.refresh($('#tasks-filter-priority'));
+          FS.glass.refresh($('#tasks-sort'));
+        }
         renderTasks();
         break;
       default:

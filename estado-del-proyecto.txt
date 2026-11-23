@@ -3,11 +3,11 @@
  ESTADO DEL PROYECTO
 =======================================================================
 Última actualización : 23 de noviembre de 2026
-Versión             : 0.1.0
-Estado general      : MVP funcional en modo local.
-                      Backend de Google programado, documentado y listo
-                      para desplegar; pendiente probarlo contra una cuenta
-                      real de Google.
+Versión             : 0.2.0
+Estado general      : MVP funcional. Backend de Google desplegado y
+                      conectado (ping y list verificados contra la hoja
+                      real). Pendiente probar la creación real de eventos
+                      de Calendar y enlaces de Meet.
 Marca               : Fundaserinco Brand Hub v1.0
 Tecnología          : HTML + CSS + JavaScript (sin build, sin framework)
 Persistencia        : localStorage + Google Sheets opcional
@@ -83,9 +83,13 @@ css/styles.css                 Tokens de marca, componentes, temas,
                                responsive, terminal, modales y toasts.
 js/config.js                   Catálogos (estados, prioridades, categorías),
                                ajustes, zonas horarias y utilidades.
+js/local-config.js             URL y token personales. IGNORADO por Git.
+js/local-config.example.js     Plantilla versionable de configuración local.
 js/store.js                    Estado local, CRUD, métricas, merge e import.
 js/api.js                      Cliente HTTP del Web App de Apps Script,
                                enlaces de Calendar y conversión de zona horaria.
+js/glass.js                    Selects personalizados con estética glass,
+                               teclado y ARIA.
 js/app.js                      Vistas, modales, drag & drop, filtros,
                                sincronización e integración con Google.
 js/terminal.js                 Intérprete de comandos de la terminal.
@@ -116,6 +120,12 @@ servidor estático o publicar directamente en GitHub Pages.
     Ctrl + ` (terminal), Esc (cerrar).
 
 4.2 Tablero
+  · Cuadrícula adaptable que ocupa el ancho disponible y elimina el
+    scroll horizontal:
+      1 columna  < 760 px
+      2 columnas 760–1179 px
+      3 columnas 1180–1679 px
+      5 columnas >= 1680 px
   · Cinco columnas: Backlog, Por hacer, En progreso, En revisión, Hecho.
   · Tarjetas con ID (FS-001), prioridad, etiquetas, puntos, responsable,
     vencimiento y estado de atraso.
@@ -215,7 +225,32 @@ servidor estático o publicar directamente en GitHub Pages.
   · Importar JSON (merge por id).
   · Borrar todos los datos locales (con confirmación; no toca Sheets).
   · Instrucciones integradas de conexión.
-  · El token se guarda solo en localStorage; nunca en el repositorio.
+  · El token se guarda solo en localStorage y/o en js/local-config.js
+    (ignorado); nunca en el repositorio.
+
+4.9 Menús desplegables glass
+  · Todos los <select> de la app se convierten en componentes
+    personalizados con el mismo valor y evento change del select nativo.
+  · Trigger translúcido con blur, borde luminoso y chevron animado.
+  · Menú flotante glass con blur intenso, sombra profunda, opción
+    seleccionada con check y hover de marca.
+  · Apertura hacia arriba automática si no hay espacio debajo.
+  · Teclado: Enter/Espacio/Arrow para abrir, flechas/Home/End para
+    navegar, Enter para elegir, Escape para cerrar, Tab para salir.
+  · ARIA: aria-haspopup, aria-expanded, role=listbox, role=option,
+    aria-selected y labels asociados al trigger.
+  · Se cierra al hacer clic fuera, al hacer scroll o al redimensionar.
+  · Los formularios siguen leyendo form.campo.value porque el select
+    nativo permanece oculto dentro del componente.
+
+4.10 Estética glass general
+  · Tokens de vidrio para claro y oscuro (--glass-*, blur, highlight).
+  · Aplicado a topbar, sidebar, botones de icono, pills, buscadores,
+    barras de herramientas, columnas del tablero, modales, toasts,
+    pestañas del calendario y menús desplegables.
+  · Halos orbitales de marca detrás del contenido (Tech Blue y Solar
+    Coral) para dar profundidad al vidrio.
+  · Contraste y legibilidad conservados en ambos temas.
 
 =======================================================================
 5. MODELO DE DATOS
@@ -348,13 +383,28 @@ servidor estático o publicar directamente en GitHub Pages.
 
 6.4 Seguridad
   · El token vive en Propiedades del script (API_TOKEN) y en el
-    localStorage del navegador. Nunca está en el código.
+    localStorage del navegador y/o en js/local-config.js (ignorado).
+    Nunca está en archivos versionados.
   · Cualquiera que tenga la URL /exec y el token puede leer/escribir la
     hoja. Tratarlo como una contraseña.
   · No se debe publicar el token en GitHub ni en capturas.
   · El acceso "cualquier persona" es necesario para que la web estática
     pueda llamar al Web App. No es lo mismo que la hoja sea pública: la
     hoja sigue privada; la API exige token.
+
+6.5 Configuración local de credenciales (predeterminados)
+  · js/local-config.js contiene apiUrl, token, calendarId, timezone y
+    meetByDefault. Está incluido en .gitignore.
+  · js/local-config.example.js es la plantilla versionada y vacía.
+  · config.js fusiona en este orden:
+        DEFAULTS  ->  FS_LOCAL_SETTINGS  ->  ajustes guardados
+    Por lo tanto, lo que se guarde desde Ajustes siempre gana.
+  · index.html carga js/local-config.js antes de config.js. Si el
+    archivo no existe en un clon, la app sigue en modo local.
+  · En GitHub Pages el archivo no se publica; se configura una vez en
+    Ajustes por navegador.
+  · Verificación: ping y list reales con la hoja activa; los datos de
+    prueba locales se limpiaron y no se enviaron registros falsos.
 
 =======================================================================
 7. GOOGLE CALENDAR Y GOOGLE MEET
@@ -437,7 +487,8 @@ servidor estático o publicar directamente en GitHub Pages.
 9. PRUEBAS REALIZADAS
 =======================================================================
 
-Verificado en navegador Chromium integrado (1280×900 y 390×844):
+Verificado en navegador Chromium integrado (390, 768, 1024, 1280,
+1440 y 1920 px de ancho):
 
   [x] Carga inicial, favicon, fuentes, logo y metadatos.
   [x] Navegación entre las 5 vistas y actualización del título.
@@ -460,13 +511,25 @@ Verificado en navegador Chromium integrado (1280×900 y 390×844):
   [x] Exportación CSV y JSON descargadas correctamente.
   [x] Importación JSON con merge por id.
   [x] Responsive en escritorio y móvil (modales, sidebar, tarjetas).
+  [x] Tablero sin scroll horizontal en todos los anchos probados:
+      1 columna a 390; 2 a 768 y 1024; 3 a 1280 y 1440; 5 a 1920.
+      document.scrollWidth == document.clientWidth en todos.
+  [x] Desplegables glass: apertura, selección, filtrado real,
+      apertura hacia arriba, teclado (Enter, flechas, Escape) y cierre
+      al hacer clic fuera.
+  [x] Desplegables glass dentro de modales: estado de tarea y zona
+      horaria; los formularios reciben el valor correcto.
+  [x] Etiquetas <label for> reasociadas al trigger y ARIA del listbox.
+  [x] Conexión real con Google: ping y list respondieron ok contra la
+      hoja "sistema de seguimiento fundaserinco" (America/Bogota).
+  [x] Credenciales predeterminadas cargadas desde js/local-config.js
+      sin guardar secretos en Git.
   [x] Sin errores de JavaScript en los flujos anteriores.
-  [x] Sintaxis de todos los JS y de Code.gs validada con Node.
+  [x] Sintaxis de todos los JS (incluido glass.js) y Code.gs validada.
   [x] JSON de appsscript.json y site.webmanifest validado.
 
-Pendiente de probar (requiere cuenta Google real):
-  [ ] Despliegue real del Web App y ping contra Google.
-  [ ] Escritura/lectura real en las hojas.
+Pendiente de probar (requiere escritura en Google):
+  [ ] Escritura real de tareas/reuniones/hitos en las hojas.
   [ ] Creación de evento + Meet con Calendar API.
   [ ] Invitaciones por correo y zona horaria real.
   [ ] Importación real de eventos.
@@ -478,11 +541,13 @@ Pendiente de probar (requiere cuenta Google real):
 =======================================================================
 
 P0 · Cierre del MVP
-  [ ] Desplegar Code.gs en una cuenta Google y validar los 6 puntos
-      pendientes de la sección 9.
-  [ ] Elegir si el token se mantiene manual o se añade OAuth.
+  [x] Desplegar Code.gs y verificar ping/list contra Google.
+  [x] Dejar URL y token como predeterminados locales (fuera de Git).
+  [ ] Probar la creación real de un evento con Meet y su borrado.
+  [ ] Probar escritura real de una tarea y una reunión.
   [ ] Publicar en GitHub Pages y probar la URL pública.
-  [ ] Limpiar cualquier dato de prueba antes de usar en producción.
+  [ ] Confirmar que js/local-config.js sigue fuera del repositorio.
+  [ ] Elegir si el token se mantiene manual o se añade OAuth.
 
 P1 · Siguiente fase funcional
   [ ] Usuarios y autenticación (login, permisos, perfiles).
@@ -629,6 +694,17 @@ P2 · Mejoras
 =======================================================================
 15. HISTORIAL
 =======================================================================
+
+  2026-11-23 · v0.2.0
+    · Credenciales de Google como predeterminados locales mediante
+      js/local-config.js (ignorado por Git) y plantilla de ejemplo.
+    · Conexión real verificada contra el Web App y la hoja.
+    · Tablero redistribuido en cuadrícula adaptable sin scroll
+      horizontal (1/2/3/5 columnas según ancho).
+    · Desplegables glass personalizados y accesibles.
+    · Estética glass en topbar, sidebar, toolbars, modales, columnas,
+      toasts y pestañas; halos de marca de fondo.
+    · Cache busting con versión en CSS/JS.
 
   2026-11-23 · v0.1.0
     · Creación del proyecto y shell con marca Fundaserinco.

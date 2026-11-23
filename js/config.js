@@ -4,7 +4,7 @@ window.FS = window.FS || {};
 (function (FS) {
   'use strict';
 
-  FS.APP_VERSION = '0.1.0';
+  FS.APP_VERSION = '0.2.0';
 
   FS.STORAGE = {
     data: 'fs.seguimiento.data.v1',
@@ -66,7 +66,8 @@ window.FS = window.FS || {};
 
   FS.getSettings = function () {
     var saved = FS.utils.loadJSON(FS.STORAGE.settings, {});
-    return Object.assign({}, FS.DEFAULTS, saved || {});
+    var local = window.FS_LOCAL_SETTINGS || {};
+    return Object.assign({}, FS.DEFAULTS, local, saved || {});
   };
 
   FS.saveSettings = function (patch) {

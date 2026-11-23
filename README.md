@@ -57,7 +57,8 @@ No hay build ni dependencias que instalar. No se sube ningún secreto: la URL y 
 
 | Vista | Función |
 |---|---|
-| **Tablero** | Kanban con 5 estados, arrastrar y soltar, prioridades, etiquetas, puntos, responsable, vencimiento y filtros. |
+| **Tablero** | Kanban con 5 estados, arrastrar y soltar, prioridades, etiquetas, puntos, responsable, vencimiento y filtros. Cuadrícula adaptable (1/2/3/5 columnas) sin scroll horizontal. |
+| **UI glass** | Superficies translúcidas, desenfoque y desplegables personalizados con animación, teclado y modo claro/oscuro. |
 | **Mis tareas** | Lista con búsqueda, filtros, orden y exportación a CSV. |
 | **Métricas** | KPIs, ritmo de cierre semanal, distribución por estado, prioridades, etiquetas, vencimientos y reuniones. |
 | **Roadmap** | Hitos por mes, progreso, cambio rápido de estado y carga de trabajo por vencimiento. |
@@ -81,8 +82,11 @@ No hay build ni dependencias que instalar. No se sube ningún secreto: la URL y 
 index.html                     Shell de la aplicación (SPA por hash)
 css/styles.css                 Tokens de marca, componentes, temas y responsive
 js/config.js                   Catálogos, ajustes y utilidades
+js/local-config.js             Configuración personal (IGNORADA por Git)
+js/local-config.example.js     Plantilla de configuración local
 js/store.js                    Estado local, CRUD, métricas y sincronización
 js/api.js                      Cliente del Web App de Google Apps Script
+js/glass.js                    Desplegables glass accesibles
 js/app.js                      Vistas, modales, drag & drop e integraciones
 js/terminal.js                 Terminal de comandos
 assets/img/                    Logos, favicons y OG image oficiales
@@ -94,7 +98,29 @@ estado-del-proyecto.txt        Bitácora de avance y pendientes
 
 ---
 
-## 4. Conectar Google Sheets y Google Calendar
+## 4. Configuración local (valores predeterminados)
+
+Para dejar la URL y el token precargados sin subirlos a GitHub:
+
+```bash
+cp js/local-config.example.js js/local-config.js
+```
+
+Completa `apiUrl` y `token` en `js/local-config.js`. Ese archivo:
+
+- Está incluido en `.gitignore` y no se versiona.
+- Se carga antes que `config.js` y actúa como valor predeterminado.
+- Tiene prioridad menor que lo guardado desde **Ajustes**, así que puedes
+  cambiarlo desde la interfaz sin tocar el archivo.
+- En GitHub Pages no existirá (o estará vacío), por lo que allí se
+  configura una vez en **Ajustes** por navegador.
+
+Si el archivo no existe, la app arranca en modo local sin errores
+funcionales (el navegador puede registrar un 404 por el script opcional).
+
+---
+
+## 5. Conectar Google Sheets y Google Calendar
 
 La app funciona en modo local desde el primer momento. Para usar Google:
 
@@ -122,16 +148,17 @@ La guía completa, con contrato de la API, columnas de las hojas y solución de 
 
 ---
 
-## 5. Privacidad
+## 6. Privacidad
 
 - Los datos viven en `localStorage` de tu navegador.
-- La URL y el token de Google nunca se incluyen en el código ni en el repositorio.
+- La URL y el token de Google se guardan en `js/local-config.js` (ignorado por Git) y/o en `localStorage`; nunca se versionan.
 - Cualquier persona con la URL `/exec` y el token puede escribir en la hoja. Trata el token como una contraseña.
 - La app aún no tiene usuarios ni autenticación (pendiente acordado).
+- Al actualizar CSS/JS se usa un parámetro `?v=` para evitar caché antigua.
 
 ---
 
-## 6. Marca
+## 7. Marca
 
 - Logos y favicons oficiales en `assets/img/`.
 - Paleta: Tech Blue `#0086C8`, Solar Coral `#F48A56`, Orbit Cyan `#4EA8DE`, navy `#0F172A`.

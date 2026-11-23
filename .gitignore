@@ -19,6 +19,7 @@ build/
 .env.*
 *.local
 google-apps-script/.clasp.json
+js/local-config.js
 
 # Logs y temporales
 *.log
