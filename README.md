@@ -26,10 +26,28 @@ También puedes abrir `index.html` con doble clic, pero un servidor local evita 
 
 ### Publicar en GitHub Pages
 
-1. Crea un repositorio en GitHub y sube el contenido de esta carpeta.
-2. En el repositorio: **Settings → Pages**.
-3. En *Build and deployment* elige **Deploy from a branch**, rama `main`, carpeta `/ (root)`.
-4. Guarda. La app quedará en `https://<usuario>.github.io/<repositorio>/`.
+Esta carpeta ya se entrega con un repositorio Git local en la rama `main` y un commit inicial. Solo falta crear el repositorio remoto y hacer push:
+
+```bash
+git remote add origin https://github.com/<usuario>/<repositorio>.git
+git push -u origin main
+```
+
+Si partes desde cero (por ejemplo, clonando en otro equipo):
+
+```bash
+git init -b main
+git add .
+git commit -m "Sistema de seguimiento Fundaserinco v0.1.0"
+git remote add origin https://github.com/<usuario>/<repositorio>.git
+git push -u origin main
+```
+
+Después:
+
+1. En GitHub: **Settings → Pages**.
+2. En *Build and deployment* elige **Deploy from a branch**, rama `main`, carpeta `/ (root)`.
+3. Guarda. La app quedará en `https://<usuario>.github.io/<repositorio>/`.
 
 No hay build ni dependencias que instalar. No se sube ningún secreto: la URL y el token de Google se guardan solo en el navegador (`localStorage`).
 

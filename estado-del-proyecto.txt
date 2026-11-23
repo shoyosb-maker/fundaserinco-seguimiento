@@ -533,13 +533,22 @@ P2 · Mejoras
 
   Requisitos: Git instalado y cuenta de GitHub.
 
+  Estado local:
+    · Repositorio ya inicializado en la rama main.
+    · Commit inicial: df40352 "Sistema de seguimiento Fundaserinco v0.1.0".
+    · Solo falta crear el repositorio remoto y hacer push.
+
   1. Abrir una terminal en esta carpeta.
   2. Ejecutar:
 
-        git init
+        git remote add origin https://github.com/<usuario>/<repo>.git
+        git push -u origin main
+
+     Si se parte desde cero en otro equipo:
+
+        git init -b main
         git add .
-        git commit -m "Sistema de seguimiento Fundaserinco"
-        git branch -M main
+        git commit -m "Sistema de seguimiento Fundaserinco v0.1.0"
         git remote add origin https://github.com/<usuario>/<repo>.git
         git push -u origin main
 
