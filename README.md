@@ -1,6 +1,6 @@
 # Fundaserinco · Sistema de Seguimiento
 
-Aplicación web de seguimiento personal para **Fundaserinco**: tablero kanban, tareas, métricas, roadmap y reuniones, con la identidad visual oficial de la marca (Tech Blue `#0086C8`, Solar Coral `#F48A56`, Orbit Cyan `#4EA8DE`, Plus Jakarta Sans y favicons oficiales).
+Aplicación web de seguimiento personal para **Fundaserinco**: tablero kanban, tareas, métricas, roadmap, reuniones y repositorios de proyectos, con la identidad visual oficial de la marca (Tech Blue `#0086C8`, Solar Coral `#F48A56`, Orbit Cyan `#4EA8DE`, Plus Jakarta Sans y favicons oficiales).
 
 Funciona **sin backend** (los datos se guardan en el navegador) y opcionalmente se conecta a **Google Sheets** como base de datos y a **Google Calendar** para crear eventos con enlace de **Google Meet**.
 
@@ -63,6 +63,7 @@ No hay build ni dependencias que instalar. No se sube ningún secreto: la URL y 
 | **Métricas** | KPIs, ritmo de cierre semanal, distribución por estado, prioridades, etiquetas, vencimientos y reuniones. |
 | **Roadmap** | Hitos por mes, progreso, cambio rápido de estado y carga de trabajo por vencimiento. |
 | **Reuniones** | Calendario mensual y agenda, reuniones propias, eliminación directa desde la agenda, categorías, invitados, notas, plantilla de Google Calendar y Meet. |
+| **Repositorios** | Biblioteca de enlaces a los proyectos existentes con nombre, URL, descripción, etiquetas y estado (activo, en pausa o finalizado). Búsqueda, filtro, copiar enlace, acceso directo y sincronización con la hoja **Repositorios** de Google Sheets. |
 | **Guías por sección** | Cada vista incluye una tarjeta de ayuda con 4 pasos. Se oculta con la X y se reabre con el botón **Guía**; el estado se recuerda por sección. |
 | **Terminal** | Consola funcional (`Ctrl + \``) para crear/mover/completar tareas, agendar reuniones, consultar métricas y navegar. |
 | **Ajustes** | Conexión con Google, copiar URL/token, exportar/importar conexión, prueba de conexión, descargar de Google, subir a Google, respaldo/importación JSON y borrado de datos locales. |
@@ -156,16 +157,26 @@ La app funciona en modo local desde el primer momento. Para usar Google:
 6. Copia la URL que termina en `/exec`.
 7. En la app: **Ajustes → Conexión con Google**, pega la URL y el token, guarda y pulsa **Probar conexión**.
 
+### Actualizar una integración existente
+
+Si ya tenías la versión anterior del backend, actualízala sin cambiar la URL:
+
+1. Pega el nuevo [`google-apps-script/Code.gs`](./google-apps-script/Code.gs) en **Extensiones → Apps Script**.
+2. Ejecuta la función `instalar` para crear la hoja **Repositorios**.
+3. En **Implementar → Administrar implementaciones**, edita la implementación existente y elige **Nueva versión → Implementar** (así conservas la misma URL `/exec`).
+4. En la app pulsa **Descargar de Google** o **Subir a Google** para estrenar la sincronización de repositorios.
+
 ### Descargar y subir por separado
 
-- **Descargar de Google** (nube hacia abajo): trae tareas, reuniones e hitos de la hoja y los mezcla con los locales por id y fecha. No envía nada a Google.
-- **Subir a Google** (nube hacia arriba): envía el estado de este navegador a la hoja. Pide confirmación y no borra filas que no existan en la app.
+- **Descargar de Google** (nube hacia abajo): trae tareas, reuniones, hitos y repositorios de la hoja y los mezcla con los locales por id y fecha. No envía nada a Google.
+- **Subir a Google** (nube hacia arriba): envía el estado de este navegador (tareas, reuniones, hitos y repositorios) a la hoja. Pide confirmación y no borra filas que no existan en la app.
+- Los **repositorios** se sincronizan con la hoja `Repositorios` y también viajan en **Exportar JSON** e **Importar JSON**.
 - El comando `sync` de la terminal sigue haciendo ambas operaciones.
 - En móvil, las dos acciones también están en el menú lateral, sección **Google**.
 
 Con eso:
 
-- Tareas, reuniones e hitos se escriben en las hojas `Tareas`, `Reuniones` e `Hitos`.
+- Tareas, reuniones, hitos y repositorios se escriben en las hojas `Tareas`, `Reuniones`, `Hitos` y `Repositorios`.
 - Al crear una reunión con la casilla de Meet activa, el backend crea el evento en Calendar con `conferenceData` y devuelve el enlace de Meet.
 - **Importar de Google** trae eventos del calendario al mes/agenda de la app.
 

@@ -196,6 +196,8 @@ window.FS = window.FS || {};
     },
     upsertMilestone: function (milestone) { return request('upsertMilestone', { milestone: milestone }); },
     deleteMilestone: function (id) { return request('deleteMilestone', { id: id }); },
+    upsertRepo: function (repo) { return request('upsertRepo', { repo: repo }); },
+    deleteRepo: function (id) { return request('deleteRepo', { id: id }); },
     bulkUpsert: function (data) { return request('bulkUpsert', data); },
     importCalendar: function (fromISO, toISO) {
       return request('importCalendar', {

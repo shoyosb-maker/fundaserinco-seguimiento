@@ -29,7 +29,7 @@ window.FS = window.FS || {};
 
   var COMMANDS = [
     'help', 'ls', 'add', 'edit', 'done', 'mv', 'rm', 'meet', 'stats',
-    'board', 'tasks', 'metrics', 'roadmap', 'meetings', 'theme', 'sync',
+    'board', 'tasks', 'metrics', 'roadmap', 'meetings', 'repos', 'theme', 'sync',
     'export', 'settings', 'config', 'clear', 'version', 'date', 'echo'
   ];
 
@@ -113,6 +113,7 @@ window.FS = window.FS || {};
       ['meet "Título" [YYYY-MM-DD] [HH:MM] [min]', 'Crea una reunión (y Meet si hay Google)'],
       ['stats', 'Resumen de tareas, puntos y reuniones'],
       ['board | tasks | metrics | roadmap | meetings', 'Navega entre vistas'],
+      ['repos', 'Abre la biblioteca de repositorios'],
       ['theme [dark|light]', 'Cambia el tema'],
       ['sync', 'Sincroniza con Google Sheets'],
       ['export [json|csv]', 'Descarga un respaldo'],
@@ -423,6 +424,11 @@ window.FS = window.FS || {};
       case 'reuniones':
         FS.app.navigate('meetings');
         print('→ Reuniones', 'muted');
+        break;
+      case 'repos':
+      case 'repositorios':
+        FS.app.navigate('repos');
+        print('→ Repositorios', 'muted');
         break;
       case 'theme':
       case 'tema': {

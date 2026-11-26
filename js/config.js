@@ -4,7 +4,7 @@ window.FS = window.FS || {};
 (function (FS) {
   'use strict';
 
-  FS.APP_VERSION = '0.2.8';
+  FS.APP_VERSION = '0.3.0';
 
   FS.STORAGE = {
     data: 'fs.seguimiento.data.v1',
@@ -40,6 +40,12 @@ window.FS = window.FS || {};
     { id: 'planned', label: 'Planeado', color: '--faint' },
     { id: 'in_progress', label: 'En curso', color: '--brand-blue' },
     { id: 'done', label: 'Completado', color: '--success' }
+  ];
+
+  FS.REPO_STATUSES = [
+    { id: 'active', label: 'Activo', color: '--success', order: 0 },
+    { id: 'paused', label: 'En pausa', color: '--warning', order: 1 },
+    { id: 'finished', label: 'Finalizado', color: '--faint', order: 2 }
   ];
 
   FS.DEFAULTS = {
@@ -97,6 +103,7 @@ window.FS = window.FS || {};
   FS.findPriority = function (id) { return FS.PRIORITIES.find(function (p) { return p.id === id; }) || FS.PRIORITIES[2]; };
   FS.findCategory = function (id) { return FS.CATEGORIES.find(function (c) { return c.id === id; }) || FS.CATEGORIES[4]; };
   FS.findMilestoneStatus = function (id) { return FS.MILESTONE_STATUSES.find(function (s) { return s.id === id; }) || FS.MILESTONE_STATUSES[0]; };
+  FS.findRepoStatus = function (id) { return FS.REPO_STATUSES.find(function (s) { return s.id === id; }) || FS.REPO_STATUSES[0]; };
 
   /* ------------------------------- Utilidades ------------------------------ */
   var U = {};

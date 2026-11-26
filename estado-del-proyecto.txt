@@ -2,16 +2,19 @@
  FUNDASERINCO · SISTEMA DE SEGUIMIENTO
  ESTADO DEL PROYECTO
 =======================================================================
-Última actualización : 23 de noviembre de 2026
-Versión             : 0.2.8
-Estado general      : MVP funcional. Backend de Google desplegado y
-                      conectado (ping y list verificados contra la hoja
-                      real). Pendiente probar la creación real de eventos
-                      de Calendar y enlaces de Meet.
+Última actualización : 26 de noviembre de 2026
+Versión             : 0.3.0
+Estado general      : MVP funcional. Backend de Google conectado
+                      (ping y list verificados contra la hoja real).
+                      Code.gs ya incluye la hoja Repositorios; falta
+                      publicar la nueva versión del Web App y probar la
+                      escritura real. También queda probar la creación
+                      real de eventos de Calendar y enlaces de Meet.
 Marca               : Fundaserinco Brand Hub v1.0
 Tecnología          : HTML + CSS + JavaScript (sin build, sin framework)
 Persistencia        : localStorage + Google Sheets opcional
 Reuniones           : Google Calendar / Google Meet (opcional)
+Repositorios        : Google Sheets opcional (hoja Repositorios)
 Terminal            : funcional (Ctrl + `)
 
 =======================================================================
@@ -28,6 +31,7 @@ Incluye:
   · Métricas calculadas en vivo.
   · Roadmap con hitos y carga mensual.
   · Calendario de reuniones propias (sin datos de ejemplo).
+  · Biblioteca de repositorios con enlaces a los proyectos existentes.
   · Terminal de comandos real.
   · Integración opcional con Google Sheets (base de datos) y Google
     Calendar (eventos + enlace de Google Meet).
@@ -267,8 +271,9 @@ servidor estático o publicar directamente en GitHub Pages.
   · Contraste y legibilidad conservados en ambos temas.
 
 4.11 Guías por sección
-  · Cada vista (tablero, tareas, métricas, roadmap y reuniones) muestra
-    una tarjeta "Guía rápida" con 4 pasos concretos.
+  · Cada vista (tablero, tareas, métricas, roadmap, reuniones y
+    repositorios) muestra una tarjeta "Guía rápida" con 4 pasos
+    concretos.
   · Se oculta con la X; el botón "Guía" de la cabecera la vuelve a
     mostrar, la enfoca y la resalta brevemente.
   · El estado se guarda por sección en localStorage bajo
@@ -288,6 +293,30 @@ servidor estático o publicar directamente en GitHub Pages.
   · Estado vacío con aviso y acceso a Ajustes para calendario, zona
     horaria y Meet.
   · Los valores no se escriben en el código ni se suben a GitHub.
+
+4.13 Repositorios
+  · Vista nueva en el menú lateral (Seguimiento → Repositorios) con
+    ruta #/repos y contador total en el propio menú.
+  · Cada registro guarda nombre, URL, descripción, etiquetas y estado
+    (active | paused | finished).
+  · Id secuencial RP-001, RP-002… independiente de tareas, reuniones e
+    hitos; no se reutiliza tras recargar.
+  · La URL se normaliza: si falta el esquema se agrega https:// y solo
+    se aceptan enlaces http o https.
+  · Búsqueda por nombre, descripción, etiquetas o enlace + filtro por
+    estado; contador de resultados y estado vacío con acción directa.
+  · Tarjetas con franja de color por estado, etiquetas, dominio visible
+    y acciones Abrir, Copiar enlace, Editar y Eliminar (con
+    confirmación).
+  · Resumen superior con total de proyectos, activos, en pausa y
+    finalizados.
+  · Los repositorios se sincronizan con Google Sheets (hoja
+    Repositorios): al crear o editar se envía upsertRepo y al eliminar
+    deleteRepo; con Google sin conectar quedan solo en local.
+  · También se incluyen en Exportar JSON e Importar JSON (merge por id
+    o reemplazo).
+  · La terminal acepta el comando `repos` (o `repositorios`) para abrir
+    la vista.
 
 =======================================================================
 5. MODELO DE DATOS
@@ -333,8 +362,20 @@ servidor estático o publicar directamente en GitHub Pages.
   created       ISO 8601
   updated       ISO 8601
 
-5.4 Claves de localStorage
-  fs.seguimiento.data.v1       Tareas, reuniones, hitos y metadatos.
+5.4 Repositorio
+  id            RP-001 (secuencial, no se reutiliza tras recargar)
+  name          Texto
+  url           URL http/https normalizada
+  description   Texto
+  tags          Arreglo de texto
+  status        active | paused | finished
+  created       ISO 8601
+  updated       ISO 8601
+  source        local | sheet
+
+5.5 Claves de localStorage
+  fs.seguimiento.data.v1       Tareas, reuniones, hitos, repositorios y
+                               metadatos.
   fs.seguimiento.settings.v1   URL, token, calendario, zona y preferencias.
   fs.seguimiento.theme         Tema elegido.
   fs.seguimiento.seen          Bandera del mensaje de bienvenida.
@@ -354,6 +395,12 @@ servidor estático o publicar directamente en GitHub Pages.
                  notes, meetLink, eventLink, eventId, source, created,
                  updated
     Hitos      · id, title, date, status, description, created, updated
+    Repositorios · id, name, url, description, tags, status, source,
+                   created, updated
+
+  Los repositorios usan la misma sincronización por id y fecha que las
+  tareas: se envían al guardar, se borran en Google al eliminar y se
+  mezclan al descargar.
 
 6.2 Contrato de la API
   Todas las peticiones exigen un token.
@@ -371,7 +418,7 @@ servidor estático o publicar directamente en GitHub Pages.
 
   Acciones POST:
     ping                 Verifica credenciales y devuelve datos de la hoja.
-    list                 Devuelve { tasks, meetings, milestones }.
+    list                 Devuelve { tasks, meetings, milestones, repos }.
     upsertTask           Inserta o actualiza una tarea por id.
     deleteTask           Elimina por id.
     upsertMeeting        Guarda reunión; con createMeet=true crea el evento
@@ -379,6 +426,8 @@ servidor estático o publicar directamente en GitHub Pages.
     deleteMeeting        Elimina fila y, si existe, el evento de Calendar.
     upsertMilestone      Inserta o actualiza un hito.
     deleteMilestone      Elimina un hito.
+    upsertRepo           Inserta o actualiza un repositorio por id.
+    deleteRepo           Elimina un repositorio por id.
     bulkUpsert           Inserta/actualiza listas completas (sincronización).
     importCalendar       Devuelve eventos del calendario en un rango.
 
@@ -411,12 +460,14 @@ servidor estático o publicar directamente en GitHub Pages.
         Calendario: primary
         Zona horaria: America/Bogota (o la que corresponda)
      Guardar y pulsar "Probar conexión".
-  8. Probar una tarea y una reunión; revisar que aparezcan en las hojas
-     Tareas y Reuniones.
+  8. Probar una tarea, una reunión y un repositorio; revisar que
+     aparezcan en las hojas Tareas, Reuniones y Repositorios.
 
   Nota: cada vez que se modifique Code.gs hay que crear una nueva versión
   de la implementación (Administrar implementaciones → Editar → Nueva
-  versión) o implementar de nuevo.
+  versión) o implementar de nuevo. Al actualizar desde v0.2.x hay que
+  ejecutar `instalar` otra vez para crear la hoja Repositorios; la URL
+  /exec se conserva si se edita la implementación existente.
 
 6.4 Seguridad
   · El token vive en Propiedades del script (API_TOKEN) y en el
@@ -510,14 +561,16 @@ servidor estático o publicar directamente en GitHub Pages.
   · Si Google está conectado, se envía en segundo plano.
   · Si el envío falla, el dato queda local y se muestra una advertencia.
   · Descargar de Google:
-      1. list → descarga tareas, reuniones e hitos.
+      1. list → descarga tareas, reuniones, hitos y repositorios.
       2. Merge por id; gana el registro con "updated" más reciente.
       3. No envía nada a la hoja.
   · Subir a Google:
-      1. bulkUpsert con el estado local completo.
+      1. bulkUpsert con el estado local completo (incluidos repositorios).
       2. Pide confirmación y muestra el conteo enviado.
       3. No borra filas que no estén en la app.
       4. Guarda la fecha de última sincronización.
+  · Los repositorios usan upsertRepo/deleteRepo al crear, editar o
+    borrar, igual que tareas e hitos.
   · El comando sync de la terminal hace descarga + subida.
   · Los borrados hechos desde la app se envían al backend. Si alguien
     borra una fila directamente en Sheets, una descarga puede volver a
@@ -533,7 +586,7 @@ Verificado en navegador Chromium integrado (390, 768, 1024, 1280,
 1440 y 1920 px de ancho):
 
   [x] Carga inicial, favicon, fuentes, logo y metadatos.
-  [x] Navegación entre las 5 vistas y actualización del título.
+  [x] Navegación entre las 6 vistas y actualización del título.
   [x] Tema oscuro/claro y persistencia de la preferencia.
   [x] Crear tarea desde el tablero y desde la terminal.
   [x] Editar tarea (título, estado, prioridad) y guardar.
@@ -550,6 +603,21 @@ Verificado en navegador Chromium integrado (390, 768, 1024, 1280,
   [x] Ajustes: abrir, validar campos, probar conexión con URL inválida
       (error controlado), cerrar sin guardar.
   [x] Persistencia tras recargar la página.
+  [x] Repositorios: crear, editar (incluido el estado con desplegable
+      glass), buscar, filtrar, limpiar filtros y eliminar con
+      confirmación.
+  [x] URL sin esquema normalizada a https:// y validación de enlaces
+      http/https.
+  [x] Repositorios incluidos en Exportar JSON e Importar JSON (merge y
+      reemplazo), sin afectar tareas, reuniones ni hitos.
+  [x] Persistencia de repositorios tras recargar y contador del menú
+      lateral actualizado.
+  [x] Cliente Google: upsertRepo/deleteRepo, repositorios en bulkUpsert,
+      descarga con merge por updated y conteos de repositorios en los
+      avisos de descarga y subida (verificado con fetch simulado).
+  [x] Code.gs: setupSheets_ crea la hoja Repositorios y
+      upsertRow_/readAll_/bulkUpsert_/deleteRow_ funcionan con una
+      SpreadsheetApp simulada (alta, lectura, tags, conteo y borrado).
   [x] Exportación CSV y JSON descargadas correctamente.
   [x] Importación JSON con merge por id.
   [x] Responsive en escritorio y móvil (modales, sidebar, tarjetas).
@@ -567,7 +635,7 @@ Verificado en navegador Chromium integrado (390, 768, 1024, 1280,
   [x] Datos de ejemplo eliminados de la hoja real y de localStorage:
       0 tareas, 0 reuniones y 0 hitos.
   [x] Barras de carga del roadmap visibles tras corregir el display.
-  [x] Guías por sección: 5 tarjetas con 4 pasos cada una, cierre
+  [x] Guías por sección: 6 tarjetas con 4 pasos cada una, cierre
       persistente tras recargar y reapertura con el botón Guía (con
       foco y realce).
   [x] Sin scroll horizontal con la guía abierta a 390, 768, 1024,
@@ -604,6 +672,8 @@ Verificado en navegador Chromium integrado (390, 768, 1024, 1280,
 
 Pendiente de probar (requiere escritura en Google):
   [ ] Escritura real de tareas/reuniones/hitos en las hojas.
+  [ ] Publicar la nueva versión de Code.gs y probar la escritura real
+      de repositorios en la hoja Repositorios.
   [ ] Creación de evento + Meet con Calendar API.
   [ ] Invitaciones por correo y zona horaria real.
   [ ] Importación real de eventos.
@@ -617,8 +687,10 @@ Pendiente de probar (requiere escritura en Google):
 P0 · Cierre del MVP
   [x] Desplegar Code.gs y verificar ping/list contra Google.
   [x] Dejar URL y token como predeterminados locales (fuera de Git).
+  [ ] Publicar la versión de Code.gs con la hoja Repositorios y
+      ejecutar instalar para crearla.
   [ ] Probar la creación real de un evento con Meet y su borrado.
-  [ ] Probar escritura real de una tarea y una reunión.
+  [ ] Probar escritura real de una tarea, una reunión y un repositorio.
   [ ] Publicar en GitHub Pages y probar la URL pública.
   [ ] Confirmar que js/local-config.js sigue fuera del repositorio.
   [ ] Elegir si el token se mantiene manual o se añade OAuth.
@@ -766,23 +838,44 @@ P2 · Mejoras
     · Crear una nueva versión de la implementación.
 
 =======================================================================
-15. DATOS ACTUALES (23-11-2026)
+15. DATOS ACTUALES (26-11-2026)
 =======================================================================
 
   Los datos de ejemplo usados para pruebas fueron eliminados de Google
   Sheets y del almacenamiento local de la app.
 
   Estado actual:
-    · Tareas:    0
-    · Reuniones: 0
-    · Hitos:     0
+    · Tareas:       0
+    · Reuniones:    0
+    · Hitos:        0
+    · Repositorios: 0
 
   La app arranca completamente vacía y lista para crear información
   real. No quedan registros de ejemplo ni reuniones en las hojas
-  Tareas, Reuniones ni Hitos.
+  Tareas, Reuniones, Hitos ni Repositorios.
 
 16. HISTORIAL
 =======================================================================
+
+  2026-11-26 · v0.3.0
+    · Repositorios sincronizados con Google Sheets: hoja Repositorios,
+      acciones upsertRepo y deleteRepo, inclusión en bulkUpsert y list.
+    · Sincronización automática al crear/editar/eliminar repositorios
+      con Google conectado, y conteos de repositorios en Descargar/Subir.
+    · Backend Code.gs actualizado; requiere ejecutar instalar y publicar
+      una nueva versión de la implementación.
+    · Cache busting actualizado a 20261126-2.
+
+  2026-11-26 · v0.2.9
+    · Nueva vista Repositorios (#/repos) para guardar enlaces de los
+      proyectos existentes con nombre, URL, descripción, etiquetas y
+      estado.
+    · Búsqueda, filtro por estado, resumen de conteos, copiar enlace,
+      abrir, editar y eliminar con confirmación.
+    · Repositorios incluidos en el respaldo JSON y en la importación;
+      son locales y no se envían a Google Sheets.
+    · Comando `repos` en la terminal.
+    · Cache busting actualizado a 20261126-1.
 
   2026-11-23 · v0.2.8
     · Sección Google en el menú lateral con Descargar de Google y Subir

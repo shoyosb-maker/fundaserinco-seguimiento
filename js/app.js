@@ -13,7 +13,8 @@ window.FS = window.FS || {};
     tasks: { title: 'Mis tareas' },
     metrics: { title: 'Métricas' },
     roadmap: { title: 'Roadmap' },
-    meetings: { title: 'Reuniones' }
+    meetings: { title: 'Reuniones' },
+    repos: { title: 'Repositorios' }
   };
 
   var ui = {
@@ -25,6 +26,8 @@ window.FS = window.FS || {};
     tasksStatus: 'all',
     tasksPriority: 'all',
     tasksSort: 'updated',
+    reposSearch: '',
+    reposStatus: 'all',
     calCursor: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
     calView: 'month',
     dragId: null,
@@ -87,6 +90,10 @@ window.FS = window.FS || {};
 
   function milestoneById(id) {
     return store.getState().milestones.find(function (m) { return m.id === id; });
+  }
+
+  function repoById(id) {
+    return store.getState().repos.find(function (r) { return r.id === id; });
   }
 
   function meetingEnd(m) {
@@ -291,6 +298,7 @@ window.FS = window.FS || {};
     else if (ui.view === 'metrics') renderMetrics();
     else if (ui.view === 'roadmap') renderRoadmap();
     else if (ui.view === 'meetings') renderMeetings();
+    else if (ui.view === 'repos') renderRepos();
     syncAssigneeOptions();
   }
 
@@ -301,7 +309,8 @@ window.FS = window.FS || {};
       board: state.tasks.filter(function (t) { return t.status !== 'done'; }).length,
       tasks: state.tasks.length,
       roadmap: state.milestones.length,
-      meetings: stats.meetingsUpcoming.length
+      meetings: stats.meetingsUpcoming.length,
+      repos: state.repos.length
     };
     Object.keys(counts).forEach(function (key) {
       var el = document.querySelector('[data-count="' + key + '"]');
@@ -855,6 +864,120 @@ window.FS = window.FS || {};
     '</div>';
   }
 
+  /* ----------------------------- Repositorios ------------------------------ */
+  function repoHost(url) {
+    try {
+      var parsed = new URL(url);
+      var label = parsed.hostname.replace(/^www\./, '') + parsed.pathname.replace(/\/$/, '');
+      return label.length > 48 ? label.slice(0, 45) + '…' : label;
+    } catch (e) {
+      return String(url || '');
+    }
+  }
+
+  function renderRepos() {
+    var grid = $('#repos-grid');
+    var summary = $('#repos-summary');
+    if (!grid) return;
+
+    var state = store.getState();
+    var search = ui.reposSearch.toLowerCase();
+    var repos = state.repos.filter(function (repo) {
+      if (ui.reposStatus !== 'all' && repo.status !== ui.reposStatus) return false;
+      if (!search) return true;
+      var haystack = (repo.id + ' ' + repo.name + ' ' + repo.description + ' ' + (repo.tags || []).join(' ') + ' ' + repo.url).toLowerCase();
+      return haystack.indexOf(search) > -1;
+    }).sort(function (a, b) {
+      var orderA = FS.findRepoStatus(a.status).order;
+      var orderB = FS.findRepoStatus(b.status).order;
+      if (orderA !== orderB) return orderA - orderB;
+      return String(b.updated).localeCompare(String(a.updated));
+    });
+
+    var counts = { active: 0, paused: 0, finished: 0 };
+    state.repos.forEach(function (repo) { counts[repo.status] = (counts[repo.status] || 0) + 1; });
+
+    if (summary) {
+      var items = [
+        { icon: 'folder_special', label: 'Proyectos', value: state.repos.length, tone: 'total' },
+        { icon: 'rocket_launch', label: 'Activos', value: counts.active, tone: 'active' },
+        { icon: 'pause_circle', label: 'En pausa', value: counts.paused, tone: 'paused' },
+        { icon: 'task_alt', label: 'Finalizados', value: counts.finished, tone: 'finished' }
+      ];
+      summary.innerHTML = '<div class="repo-summary__grid">' + items.map(function (item) {
+        return '<div class="repo-summary__item repo-summary__item--' + item.tone + '">' +
+          '<span class="repo-summary__icon">' + icon(item.icon) + '</span>' +
+          '<span class="repo-summary__value">' + item.value + '</span>' +
+          '<span class="repo-summary__label">' + esc(item.label) + '</span>' +
+        '</div>';
+      }).join('') + '</div>';
+    }
+
+    var countEl = $('#repos-count');
+    if (countEl) {
+      var suffix = repos.length !== state.repos.length ? ' de ' + state.repos.length : '';
+      countEl.textContent = repos.length + (repos.length === 1 ? ' repositorio' : ' repositorios') + suffix;
+    }
+
+    if (!state.repos.length) {
+      grid.innerHTML = '<div class="empty-state">' + icon('folder_open') +
+        '<h3>Aún no hay repositorios</h3>' +
+        '<p>Guarda los enlaces de los proyectos que ya tienes para tenerlos siempre a mano, con su descripción, etiquetas y estado.</p>' +
+        '<div class="empty-state__actions"><button class="btn btn-primary" type="button" data-action="new-repo">' + icon('add') + ' Agregar primer repositorio</button></div>' +
+      '</div>';
+      return;
+    }
+
+    if (!repos.length) {
+      grid.innerHTML = '<div class="empty-state">' + icon('search_off') +
+        '<h3>Sin resultados</h3>' +
+        '<p>No hay repositorios que coincidan con la búsqueda o el estado elegido.</p>' +
+        '<div class="empty-state__actions"><button class="btn btn-ghost" type="button" data-action="clear-repo-filters">Limpiar filtros</button></div>' +
+      '</div>';
+      return;
+    }
+
+    grid.innerHTML = repos.map(repoCardHtml).join('');
+  }
+
+  function repoCardHtml(repo) {
+    var status = FS.findRepoStatus(repo.status);
+    var title = repo.url
+      ? '<a class="repo-card__title" href="' + esc(repo.url) + '" target="_blank" rel="noopener noreferrer" title="Abrir ' + esc(repo.name) + '">' +
+          '<span>' + esc(repo.name) + '</span>' + icon('open_in_new') +
+        '</a>'
+      : '<span class="repo-card__title">' + esc(repo.name) + '</span>';
+    var description = repo.description
+      ? '<p class="repo-card__desc">' + esc(repo.description) + '</p>'
+      : '<p class="repo-card__desc is-empty">Sin descripción.</p>';
+    var tags = (repo.tags || []).length
+      ? '<div class="repo-card__tags">' + repo.tags.map(function (tag) { return '<span class="tag">' + esc(tag) + '</span>'; }).join('') + '</div>'
+      : '';
+    var canOpen = Boolean(repo.url);
+
+    return '<article class="repo-card" data-status="' + status.id + '">' +
+      '<div class="repo-card__head">' +
+        '<span class="repo-card__icon">' + icon('folder_open') + '</span>' +
+        '<span class="repo-card__id">' + esc(repo.id) + '</span>' +
+        '<span class="repo-status" data-status="' + status.id + '">' + esc(status.label) + '</span>' +
+      '</div>' +
+      title +
+      description +
+      tags +
+      '<div class="repo-card__foot">' +
+        '<span class="repo-card__host" title="' + esc(repo.url) + '">' + icon('link') +
+          '<span class="repo-card__host-text">' + esc(repoHost(repo.url)) + '</span>' +
+        '</span>' +
+        '<div class="repo-card__actions">' +
+          (canOpen ? '<button class="icon-btn" type="button" data-action="open-repo" data-id="' + esc(repo.id) + '" title="Abrir enlace" aria-label="Abrir enlace">' + icon('open_in_new') + '</button>' : '') +
+          (canOpen ? '<button class="icon-btn" type="button" data-action="copy-repo" data-id="' + esc(repo.id) + '" title="Copiar enlace" aria-label="Copiar enlace">' + icon('content_copy') + '</button>' : '') +
+          '<button class="icon-btn" type="button" data-action="edit-repo" data-id="' + esc(repo.id) + '" title="Editar repositorio" aria-label="Editar repositorio">' + icon('edit') + '</button>' +
+          '<button class="icon-btn icon-btn--danger" type="button" data-action="delete-repo" data-id="' + esc(repo.id) + '" title="Eliminar repositorio" aria-label="Eliminar repositorio">' + icon('delete') + '</button>' +
+        '</div>' +
+      '</div>' +
+    '</article>';
+  }
+
   /* ------------------------------ Modal tarea ------------------------------ */
   function openTaskModal(id, defaults) {
     var task = id ? taskById(id) : null;
@@ -952,6 +1075,16 @@ window.FS = window.FS || {};
   function pushMilestoneRemote(milestone) {
     if (!milestone || !FS.isConfigured()) return;
     api.upsertMilestone(milestone).catch(function (err) {
+      toast('Guardado localmente, pero falló el envío a Google: ' + err.message, 'warn');
+    });
+  }
+
+  function pushRepoRemote(repo) {
+    if (!repo || !FS.isConfigured()) return;
+    api.upsertRepo(repo).then(function () {
+      if (connection.state !== 'online') setConnection('online');
+    }).catch(function (err) {
+      setConnection('error', err.message);
       toast('Guardado localmente, pero falló el envío a Google: ' + err.message, 'warn');
     });
   }
@@ -1151,6 +1284,87 @@ window.FS = window.FS || {};
             toast('Hito eliminado.', 'ok');
             if (FS.isConfigured()) api.deleteMilestone(milestone.id).catch(function (err) { toast('No se pudo eliminar en Google: ' + err.message, 'warn'); });
           });
+      });
+    }
+  }
+
+  /* --------------------------- Modal repositorio --------------------------- */
+  function openRepoModal(id) {
+    var repo = id ? repoById(id) : null;
+    var r = repo || { name: '', url: '', description: '', tags: [], status: 'active' };
+    var tagValue = (r.tags || []).join(', ');
+
+    var body =
+      '<form id="repo-form" novalidate>' +
+        '<div class="form-grid">' +
+          '<div class="field field--full"><label for="repo-name">Nombre *</label><input id="repo-name" name="name" required maxlength="100" value="' + esc(r.name) + '" placeholder="Ej. Portal Fundaserinco"></div>' +
+          '<div class="field field--full"><label for="repo-url">Enlace *</label><input id="repo-url" name="url" required maxlength="500" value="' + esc(r.url) + '" placeholder="github.com/usuario/proyecto"><span class="field__hint">Acepta github.com/… o la URL completa; si falta el esquema se agrega https://.</span></div>' +
+          '<div class="field field--full"><label for="repo-desc">Descripción</label><textarea id="repo-desc" name="description" placeholder="Qué es, para qué sirve, estado actual…">' + esc(r.description || '') + '</textarea></div>' +
+          '<div class="field"><label for="repo-tags">Etiquetas</label><input id="repo-tags" name="tags" value="' + esc(tagValue) + '" placeholder="web, cliente, demo"><span class="field__hint">Separadas por comas.</span></div>' +
+          '<div class="field"><label for="repo-status">Estado</label><select id="repo-status" name="status">' +
+            FS.REPO_STATUSES.map(function (s) { return '<option value="' + s.id + '"' + (r.status === s.id ? ' selected' : '') + '>' + esc(s.label) + '</option>'; }).join('') +
+          '</select></div>' +
+        '</div>' +
+      '</form>';
+
+    var foot =
+      (repo ? '<button class="btn btn-danger btn-sm" type="button" id="repo-delete">' + icon('delete') + ' Eliminar</button>' : '') +
+      '<div class="spacer"></div>' +
+      '<button class="btn btn-ghost" type="button" data-action="close-modal">Cancelar</button>' +
+      '<button class="btn btn-primary" type="submit" form="repo-form">' + (repo ? 'Guardar cambios' : 'Guardar repositorio') + '</button>';
+
+    var handle = openModal({
+      title: repo ? 'Editar repositorio' : 'Nuevo repositorio',
+      subtitle: repo ? repo.id + ' · actualizado ' + U.formatDateTime(repo.updated) : (FS.isConfigured() ? 'Se guarda aquí y se envía a Google Sheets' : 'Se guarda solo en este navegador (Google no conectado)'),
+      body: body,
+      foot: foot
+    });
+
+    var form = handle.root.querySelector('#repo-form');
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var name = handle.root.querySelector('#repo-name').value.trim();
+      var url = store.normalizeUrl(handle.root.querySelector('#repo-url').value);
+      if (!name) {
+        handle.root.querySelector('#repo-name').focus();
+        toast('El repositorio necesita un nombre.', 'warn');
+        return;
+      }
+      if (!url) {
+        handle.root.querySelector('#repo-url').focus();
+        toast('Escribe un enlace válido (por ejemplo github.com/usuario/proyecto).', 'warn');
+        return;
+      }
+      var data = {
+        name: name,
+        url: url,
+        description: handle.root.querySelector('#repo-desc').value.trim(),
+        tags: store.normalizeTags(handle.root.querySelector('#repo-tags').value),
+        status: handle.root.querySelector('#repo-status').value
+      };
+      var saved = repo ? store.updateRepo(repo.id, data) : store.addRepo(data);
+      handle.close();
+      toast(repo ? 'Repositorio actualizado.' : 'Repositorio guardado (' + saved.id + ').', 'ok');
+      pushRepoRemote(saved);
+    });
+
+    var del = handle.root.querySelector('#repo-delete');
+    if (del) {
+      del.addEventListener('click', function () {
+        confirmDialog({
+          title: 'Eliminar repositorio',
+          message: 'Se eliminará "' + repo.name + '" de este navegador' + (FS.isConfigured() ? ' y de Google Sheets.' : '.'),
+          confirmLabel: 'Eliminar',
+          danger: true
+        }).then(function (ok) {
+          if (!ok) return;
+          store.deleteRepo(repo.id);
+          handle.close();
+          toast('Repositorio eliminado.', 'ok');
+          if (FS.isConfigured()) {
+            api.deleteRepo(repo.id).catch(function (err) { toast('No se pudo borrar en Google: ' + err.message, 'warn'); });
+          }
+        });
       });
     }
   }
@@ -1544,7 +1758,7 @@ window.FS = window.FS || {};
     handle.root.querySelector('#settings-reset').addEventListener('click', function () {
       confirmDialog({
         title: 'Borrar todos los datos locales',
-        message: 'Se eliminarán tareas, reuniones e hitos de este navegador. Los datos de Google Sheets no se tocan. Exporta un respaldo antes de continuar.',
+        message: 'Se eliminarán tareas, reuniones, hitos y repositorios de este navegador. Los datos de Google Sheets no se tocan. Exporta un respaldo antes de continuar.',
         confirmLabel: 'Borrar datos',
         danger: true
       }).then(function (ok) {
@@ -1591,10 +1805,10 @@ window.FS = window.FS || {};
       var counts = store.mergeRemote(data || {});
       setConnection('online');
       render();
-      var total = counts.tasks + counts.meetings + counts.milestones;
+      var total = counts.tasks + counts.meetings + counts.milestones + counts.repos;
       if (!silent) {
         toast(total
-          ? 'Descargado: ' + counts.tasks + ' tareas, ' + counts.meetings + ' reuniones, ' + counts.milestones + ' hitos.'
+          ? 'Descargado: ' + counts.tasks + ' tareas, ' + counts.meetings + ' reuniones, ' + counts.milestones + ' hitos y ' + counts.repos + ' repositorios.'
           : 'No había novedades en Google Sheets.', total ? 'ok' : 'info');
       }
       return counts;
@@ -1614,7 +1828,7 @@ window.FS = window.FS || {};
       return Promise.resolve(null);
     }
     var state = store.getState();
-    var total = state.tasks.length + state.meetings.length + state.milestones.length;
+    var total = state.tasks.length + state.meetings.length + state.milestones.length + state.repos.length;
     if (!total) {
       if (!skipConfirm) toast('No hay datos para subir.', 'warn');
       return Promise.resolve(null);
@@ -1626,13 +1840,14 @@ window.FS = window.FS || {};
       return api.bulkUpsert({
         tasks: current.tasks,
         meetings: current.meetings,
-        milestones: current.milestones
+        milestones: current.milestones,
+        repos: current.repos
       }).then(function (result) {
         store.markSynced();
         setConnection('online');
         render();
         var c = result || {};
-        toast('Subido: ' + (c.tasks || 0) + ' tareas, ' + (c.meetings || 0) + ' reuniones, ' + (c.milestones || 0) + ' hitos.', 'ok');
+        toast('Subido: ' + (c.tasks || 0) + ' tareas, ' + (c.meetings || 0) + ' reuniones, ' + (c.milestones || 0) + ' hitos y ' + (c.repos || 0) + ' repositorios.', 'ok');
         return result;
       }).catch(function (err) {
         setConnection('error', err.message);
@@ -1644,7 +1859,7 @@ window.FS = window.FS || {};
     if (skipConfirm) return doPush();
     return confirmDialog({
       title: 'Subir a Google Sheets',
-      message: 'Se enviarán ' + state.tasks.length + ' tareas, ' + state.meetings.length + ' reuniones y ' + state.milestones.length + ' hitos de este navegador a la hoja. Las filas que no estén en la app no se borran.',
+      message: 'Se enviarán ' + state.tasks.length + ' tareas, ' + state.meetings.length + ' reuniones, ' + state.milestones.length + ' hitos y ' + state.repos.length + ' repositorios de este navegador a la hoja. Las filas que no estén en la app no se borran.',
       confirmLabel: 'Subir',
       danger: false
     }).then(function (ok) {
@@ -1815,6 +2030,37 @@ window.FS = window.FS || {};
       return;
     }
     if (action === 'edit-milestone') { openMilestoneModal(el.dataset.id); return; }
+    if (action === 'edit-repo') { openRepoModal(el.dataset.id); return; }
+    if (action === 'open-repo') {
+      var repoOpen = repoById(el.dataset.id);
+      if (repoOpen && repoOpen.url) window.open(repoOpen.url, '_blank', 'noopener');
+      return;
+    }
+    if (action === 'copy-repo') {
+      var repoCopy = repoById(el.dataset.id);
+      if (!repoCopy || !repoCopy.url) return;
+      U.copy(repoCopy.url).then(function () { toast('Enlace copiado al portapapeles.', 'ok'); })
+        .catch(function () { toast('No se pudo copiar automáticamente.', 'warn'); });
+      return;
+    }
+    if (action === 'delete-repo') {
+      var repoDelete = repoById(el.dataset.id);
+      if (!repoDelete) return;
+      confirmDialog({
+        title: 'Eliminar repositorio',
+        message: 'Se eliminará "' + repoDelete.name + '" de este navegador' + (FS.isConfigured() ? ' y de Google Sheets.' : '.'),
+        confirmLabel: 'Eliminar',
+        danger: true
+      }).then(function (ok) {
+        if (!ok) return;
+        store.deleteRepo(repoDelete.id);
+        toast('Repositorio eliminado.', 'ok');
+        if (FS.isConfigured()) {
+          api.deleteRepo(repoDelete.id).catch(function (err) { toast('No se pudo borrar en Google: ' + err.message, 'warn'); });
+        }
+      });
+      return;
+    }
 
     switch (action) {
       case 'toggle-theme':
@@ -1855,6 +2101,9 @@ window.FS = window.FS || {};
         break;
       case 'new-milestone':
         openMilestoneModal();
+        break;
+      case 'new-repo':
+        openRepoModal();
         break;
       case 'sync':
         syncNow();
@@ -1931,6 +2180,14 @@ window.FS = window.FS || {};
           FS.glass.refresh($('#tasks-sort'));
         }
         renderTasks();
+        break;
+      case 'clear-repo-filters':
+        ui.reposSearch = '';
+        ui.reposStatus = 'all';
+        $('#repos-search').value = '';
+        $('#repos-filter-status').value = 'all';
+        if (FS.glass) FS.glass.refresh($('#repos-filter-status'));
+        renderRepos();
         break;
       default:
         break;
@@ -2028,6 +2285,21 @@ window.FS = window.FS || {};
       ui.tasksSort = e.target.value;
       renderTasks();
     });
+
+    var reposSearch = $('#repos-search');
+    if (reposSearch) {
+      reposSearch.addEventListener('input', U.debounce(function () {
+        ui.reposSearch = reposSearch.value.trim();
+        renderRepos();
+      }, 140));
+    }
+    var reposStatus = $('#repos-filter-status');
+    if (reposStatus) {
+      reposStatus.addEventListener('change', function (e) {
+        ui.reposStatus = e.target.value;
+        renderRepos();
+      });
+    }
   }
 
   /* --------------------------------- Init ---------------------------------- */
@@ -2084,6 +2356,7 @@ window.FS = window.FS || {};
     openTaskModal: openTaskModal,
     openMeetingModal: openMeetingModal,
     openMilestoneModal: openMilestoneModal,
+    openRepoModal: openRepoModal,
     openSettings: openSettings,
     openTerminal: openTerminal,
     closeTerminal: closeTerminal,

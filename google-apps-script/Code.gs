@@ -30,13 +30,15 @@ var PROPS = PropertiesService.getScriptProperties();
 var SHEETS = {
   tasks: 'Tareas',
   meetings: 'Reuniones',
-  milestones: 'Hitos'
+  milestones: 'Hitos',
+  repos: 'Repositorios'
 };
 
 var HEADERS = {
   tasks: ['id', 'title', 'description', 'status', 'priority', 'points', 'assignee', 'tags', 'due', 'created', 'updated', 'completedAt'],
   meetings: ['id', 'title', 'date', 'start', 'duration', 'category', 'attendees', 'notes', 'meetLink', 'eventLink', 'eventId', 'source', 'created', 'updated'],
-  milestones: ['id', 'title', 'date', 'status', 'description', 'created', 'updated']
+  milestones: ['id', 'title', 'date', 'status', 'description', 'created', 'updated'],
+  repos: ['id', 'name', 'url', 'description', 'tags', 'status', 'source', 'created', 'updated']
 };
 
 /* ================================ Endpoints =============================== */
@@ -75,6 +77,11 @@ function doPost(e) {
         return json_({ ok: true, data: upsertRow_('milestones', data.milestone) });
       case 'deleteMilestone':
         deleteRow_('milestones', data.id);
+        return json_({ ok: true, data: { deleted: data.id } });
+      case 'upsertRepo':
+        return json_({ ok: true, data: upsertRow_('repos', data.repo) });
+      case 'deleteRepo':
+        deleteRow_('repos', data.id);
         return json_({ ok: true, data: { deleted: data.id } });
       case 'upsertMeeting':
         return json_({ ok: true, data: saveMeeting_(data) });
@@ -190,7 +197,7 @@ function serialize_(value, header) {
 }
 
 function readAll_() {
-  var result = { tasks: [], meetings: [], milestones: [] };
+  var result = { tasks: [], meetings: [], milestones: [], repos: [] };
   Object.keys(SHEETS).forEach(function (key) {
     var sheet = getSheet_(key);
     var lastRow = sheet.getLastRow();
@@ -271,8 +278,8 @@ function deleteRow_(key, id) {
 }
 
 function bulkUpsert_(data) {
-  var counts = { tasks: 0, meetings: 0, milestones: 0 };
-  ['tasks', 'meetings', 'milestones'].forEach(function (key) {
+  var counts = { tasks: 0, meetings: 0, milestones: 0, repos: 0 };
+  ['tasks', 'meetings', 'milestones', 'repos'].forEach(function (key) {
     var list = Array.isArray(data[key]) ? data[key] : [];
     list.forEach(function (item) {
       if (!item || !item.id) return;

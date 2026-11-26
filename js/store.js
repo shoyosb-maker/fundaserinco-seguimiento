@@ -6,8 +6,8 @@ window.FS = window.FS || {};
 
   var U = FS.utils;
 
-  var PREFIX = { task: 'FS', meeting: 'MT', milestone: 'HT' };
-  var SEQ_KEYS = { task: 'task', meeting: 'meeting', milestone: 'milestone' };
+  var PREFIX = { task: 'FS', meeting: 'MT', milestone: 'HT', repo: 'RP' };
+  var SEQ_KEYS = { task: 'task', meeting: 'meeting', milestone: 'milestone', repo: 'repo' };
 
   function blankState() {
     return {
@@ -15,7 +15,8 @@ window.FS = window.FS || {};
       tasks: [],
       meetings: [],
       milestones: [],
-      meta: { seq: { task: 0, meeting: 0, milestone: 0 }, lastSync: null }
+      repos: [],
+      meta: { seq: { task: 0, meeting: 0, milestone: 0, repo: 0 }, lastSync: null }
     };
   }
 
@@ -92,26 +93,60 @@ window.FS = window.FS || {};
     };
   }
 
+  function normalizeUrl(raw) {
+    var value = String(raw || '').trim();
+    if (!value || /\s/.test(value)) return '';
+    if (/^[a-z][a-z0-9+.-]*:\/\//i.test(value) && !/^https?:\/\//i.test(value)) return '';
+    if (!/^https?:\/\//i.test(value)) value = 'https://' + value;
+    try {
+      var url = new URL(value);
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') return '';
+      var host = url.hostname;
+      if (!host || !/^[a-z0-9.-]+$/i.test(host)) return '';
+      if (host !== 'localhost' && host.indexOf('.') === -1) return '';
+      return url.href;
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function normalizeRepo(r) {
+    var now = new Date().toISOString();
+    return {
+      id: String(r.id || ''),
+      name: String(r.name || 'Proyecto').trim(),
+      url: normalizeUrl(r.url),
+      description: String(r.description || ''),
+      tags: normalizeTags(r.tags),
+      status: FS.findRepoStatus(r.status).id,
+      created: r.created || now,
+      updated: r.updated || now,
+      source: r.source || 'local'
+    };
+  }
+
   function normalizeState(raw) {
     if (!raw || typeof raw !== 'object') return blankState();
     var state = blankState();
     state.tasks = Array.isArray(raw.tasks) ? raw.tasks.map(normalizeTask).filter(function (t) { return t.id; }) : [];
     state.meetings = Array.isArray(raw.meetings) ? raw.meetings.map(normalizeMeeting).filter(function (m) { return m.id; }) : [];
     state.milestones = Array.isArray(raw.milestones) ? raw.milestones.map(normalizeMilestone).filter(function (m) { return m.id; }) : [];
+    state.repos = Array.isArray(raw.repos) ? raw.repos.map(normalizeRepo).filter(function (r) { return r.id; }) : [];
     state.meta.lastSync = (raw.meta && raw.meta.lastSync) || null;
     state.meta.seq = recalcSeq(state);
     var storedSeq = (raw.meta && raw.meta.seq) || {};
-    ['task', 'meeting', 'milestone'].forEach(function (key) {
+    ['task', 'meeting', 'milestone', 'repo'].forEach(function (key) {
       state.meta.seq[key] = Math.max(state.meta.seq[key], Number(storedSeq[key]) || 0);
     });
     return state;
   }
 
   function recalcSeq(state) {
-    var seq = { task: 0, meeting: 0, milestone: 0 };
+    var seq = { task: 0, meeting: 0, milestone: 0, repo: 0 };
     state.tasks.forEach(function (t) { seq.task = Math.max(seq.task, seqOf(t.id, PREFIX.task)); });
     state.meetings.forEach(function (m) { seq.meeting = Math.max(seq.meeting, seqOf(m.id, PREFIX.meeting)); });
     state.milestones.forEach(function (m) { seq.milestone = Math.max(seq.milestone, seqOf(m.id, PREFIX.milestone)); });
+    state.repos.forEach(function (r) { seq.repo = Math.max(seq.repo, seqOf(r.id, PREFIX.repo)); });
     return seq;
   }
 
@@ -277,16 +312,55 @@ window.FS = window.FS || {};
       return false;
     }
 
+    /* ------------------------------ Repositorios ----------------------------- */
+    function addRepo(data) {
+      var now = nowISO();
+      var repo = normalizeRepo(Object.assign({
+        id: nextId('repo'),
+        created: now,
+        updated: now,
+        source: 'local'
+      }, data || {}));
+      repo.updated = now;
+      state.repos.unshift(repo);
+      persist();
+      emit('repo:add');
+      return repo;
+    }
+
+    function updateRepo(id, patch) {
+      var repo = find(state.repos, id);
+      if (!repo) return null;
+      var next = normalizeRepo(Object.assign({}, repo, patch, { id: repo.id, created: repo.created }));
+      next.updated = nowISO();
+      Object.assign(repo, next);
+      persist();
+      emit('repo:update');
+      return repo;
+    }
+
+    function deleteRepo(id) {
+      var before = state.repos.length;
+      state.repos = state.repos.filter(function (r) { return r.id !== id; });
+      if (state.repos.length !== before) {
+        persist();
+        emit('repo:delete');
+        return true;
+      }
+      return false;
+    }
+
     /* ------------------------------ Import / sync ---------------------------- */
     function mergeRemote(remote) {
       var incoming = {
         tasks: Array.isArray(remote && remote.tasks) ? remote.tasks.map(normalizeTask) : [],
         meetings: Array.isArray(remote && remote.meetings) ? remote.meetings.map(normalizeMeeting) : [],
-        milestones: Array.isArray(remote && remote.milestones) ? remote.milestones.map(normalizeMilestone) : []
+        milestones: Array.isArray(remote && remote.milestones) ? remote.milestones.map(normalizeMilestone) : [],
+        repos: Array.isArray(remote && remote.repos) ? remote.repos.map(normalizeRepo) : []
       };
-      var counts = { tasks: 0, meetings: 0, milestones: 0 };
+      var counts = { tasks: 0, meetings: 0, milestones: 0, repos: 0 };
 
-      ['tasks', 'meetings', 'milestones'].forEach(function (kind) {
+      ['tasks', 'meetings', 'milestones', 'repos'].forEach(function (kind) {
         var local = state[kind];
         incoming[kind].forEach(function (item) {
           if (!item.id) return;
@@ -318,7 +392,8 @@ window.FS = window.FS || {};
         exportedAt: nowISO(),
         tasks: state.tasks,
         meetings: state.meetings,
-        milestones: state.milestones
+        milestones: state.milestones,
+        repos: state.repos
       }));
     }
 
@@ -327,15 +402,17 @@ window.FS = window.FS || {};
       var imported = normalizeState({
         tasks: Array.isArray(data.tasks) ? data.tasks : [],
         meetings: Array.isArray(data.meetings) ? data.meetings : [],
-        milestones: Array.isArray(data.milestones) ? data.milestones : []
+        milestones: Array.isArray(data.milestones) ? data.milestones : [],
+        repos: Array.isArray(data.repos) ? data.repos : []
       });
 
       if (replace) {
         state.tasks = imported.tasks;
         state.meetings = imported.meetings;
         state.milestones = imported.milestones;
+        state.repos = imported.repos;
       } else {
-        ['tasks', 'meetings', 'milestones'].forEach(function (kind) {
+        ['tasks', 'meetings', 'milestones', 'repos'].forEach(function (kind) {
           imported[kind].forEach(function (item) {
             var existing = find(state[kind], item.id);
             if (existing) Object.assign(existing, item);
@@ -350,7 +427,8 @@ window.FS = window.FS || {};
       return {
         tasks: state.tasks.length,
         meetings: state.meetings.length,
-        milestones: state.milestones.length
+        milestones: state.milestones.length,
+        repos: state.repos.length
       };
     }
 
@@ -499,6 +577,9 @@ window.FS = window.FS || {};
       addMilestone: addMilestone,
       updateMilestone: updateMilestone,
       deleteMilestone: deleteMilestone,
+      addRepo: addRepo,
+      updateRepo: updateRepo,
+      deleteRepo: deleteRepo,
       mergeRemote: mergeRemote,
       exportData: exportData,
       importData: importData,
@@ -507,7 +588,8 @@ window.FS = window.FS || {};
       stats: stats,
       onExternalChange: onExternalChange,
       normalizeTags: normalizeTags,
-      normalizeAttendees: normalizeAttendees
+      normalizeAttendees: normalizeAttendees,
+      normalizeUrl: normalizeUrl
     };
   })();
 
