@@ -22,12 +22,12 @@ window.FS = window.FS || {};
     boardSearch: '',
     boardPriority: 'all',
     boardAssignee: 'all',
-    boardProject: 'all',
+    boardProjects: [],
     boardDone: '',
     tasksSearch: '',
     tasksStatus: 'all',
     tasksPriority: 'all',
-    tasksProject: 'all',
+    tasksProjects: [],
     tasksDone: '',
     tasksSort: 'updated',
     reposSearch: '',
@@ -42,6 +42,7 @@ window.FS = window.FS || {};
   var connection = { state: FS.isConfigured() ? 'checking' : 'local', detail: '' };
   var modalStack = [];
   var lastFocused = null;
+  var calendarCursor = { board: null, tasks: null };
 
   /* ------------------------------ Helpers DOM ------------------------------ */
   function $(sel, ctx) { return (ctx || document).querySelector(sel); }
@@ -342,15 +343,15 @@ window.FS = window.FS || {};
   }
 
   function renderCurrent() {
+    syncAssigneeOptions();
+    syncProjectPanels();
+    syncDateFilters();
     if (ui.view === 'board') renderBoard();
     else if (ui.view === 'tasks') renderTasks();
     else if (ui.view === 'metrics') renderMetrics();
     else if (ui.view === 'roadmap') renderRoadmap();
     else if (ui.view === 'meetings') renderMeetings();
     else if (ui.view === 'repos') renderRepos();
-    syncAssigneeOptions();
-    syncProjectOptions();
-    syncDoneFilterControls();
   }
 
   function renderChrome() {
@@ -402,21 +403,24 @@ window.FS = window.FS || {};
   }
 
   /* --------------------------------- Tablero ------------------------------- */
-  function matchesTask(task, search, priority, assignee, project, doneDay) {
+  function matchesTask(task, search, priority, assignee, projects, doneDay) {
     if (priority !== 'all' && task.priority !== priority) return false;
     if (assignee !== 'all' && (task.assignee || '') !== assignee) return false;
-    if (project && project !== 'all') {
-      if (project === 'none') {
-        if ((task.repoIds || []).length) return false;
-      } else if (!taskHasRepo(task, project)) {
-        return false;
-      }
-    }
+    if (!matchesProjectSelection(task, projects)) return false;
     if (doneDay && completedDay(task) !== doneDay) return false;
     if (!search) return true;
     var projectNames = taskProjectNames(task).map(function (p) { return p.name; }).join(' ');
     var haystack = (task.id + ' ' + task.title + ' ' + task.description + ' ' + (task.tags || []).join(' ') + ' ' + (task.assignee || '') + ' ' + projectNames + ' ' + completedDay(task)).toLowerCase();
     return haystack.indexOf(search.toLowerCase()) > -1;
+  }
+
+  function matchesProjectSelection(task, selected) {
+    if (!selected || !selected.length) return true;
+    var ids = task.repoIds || [];
+    if (selected.indexOf('none') > -1 && !ids.length) return true;
+    return selected.some(function (id) {
+      return id !== 'none' && ids.indexOf(id) > -1;
+    });
   }
 
   function renderBoard() {
@@ -426,7 +430,7 @@ window.FS = window.FS || {};
     var t = today();
 
     var filtered = state.tasks.filter(function (task) {
-      return matchesTask(task, ui.boardSearch, ui.boardPriority, ui.boardAssignee, ui.boardProject, ui.boardDone);
+      return matchesTask(task, ui.boardSearch, ui.boardPriority, ui.boardAssignee, ui.boardProjects, ui.boardDone);
     });
 
     var byStatus = {};
@@ -501,43 +505,235 @@ window.FS = window.FS || {};
     if (FS.glass) FS.glass.refresh(select);
   }
 
-  function syncProjectOptions() {
+  function projectFilterIds(kind) {
+    return kind === 'board' ? ui.boardProjects : ui.tasksProjects;
+  }
+
+  function syncProjectPanels() {
     var repos = sortedRepos();
+    var validIds = repos.map(function (r) { return r.id; });
     var signature = repos.map(function (r) { return r.id + ':' + r.name; }).join('|');
-    ['#board-filter-project', '#tasks-filter-project'].forEach(function (sel) {
-      var select = $(sel);
-      if (!select) return;
-      var isTasks = select.id === 'tasks-filter-project';
-      if (select.dataset.signature !== signature) {
-        select.dataset.signature = signature;
-        select.innerHTML = '<option value="all">Todos los proyectos</option>' +
-          '<option value="none">Sin proyecto</option>' +
-          repos.map(function (r) { return '<option value="' + esc(r.id) + '">' + esc(r.name) + '</option>'; }).join('');
-        select.disabled = !repos.length;
+    ['board', 'tasks'].forEach(function (kind) {
+      var ids = projectFilterIds(kind);
+      var cleaned = repos.length ? ids.filter(function (id) { return id === 'none' || validIds.indexOf(id) > -1; }) : [];
+      if (cleaned.length !== ids.length) {
+        ids.length = 0;
+        Array.prototype.push.apply(ids, cleaned);
       }
-      var current = isTasks ? ui.tasksProject : ui.boardProject;
-      var valid = current === 'all' || current === 'none' || repos.some(function (r) { return r.id === current; });
-      if (!valid) current = 'all';
-      select.value = current;
-      if (isTasks) ui.tasksProject = current;
-      else ui.boardProject = current;
-      if (FS.glass) FS.glass.refresh(select);
+      var list = document.querySelector('[data-project-list="' + kind + '"]');
+      if (list && list.dataset.signature !== signature) {
+        list.dataset.signature = signature;
+        list.innerHTML = repos.length
+          ? '<label class="filter-option"><input type="checkbox" value="none"><span class="filter-option__name">Sin proyecto</span><span class="filter-option__meta">—</span></label>' +
+            repos.map(function (r) {
+              return '<label class="filter-option"><input type="checkbox" value="' + esc(r.id) + '">' +
+                '<span class="filter-option__name">' + esc(r.name) + '</span>' +
+                '<span class="filter-option__meta">' + esc(r.id) + '</span></label>';
+            }).join('')
+          : '<p class="filter-panel__empty">Aún no hay proyectos guardados. Créalos en la vista Repositorios.</p>';
+      }
+      if (list) {
+        $$('input[type="checkbox"]', list).forEach(function (input) {
+          input.checked = ids.indexOf(input.value) > -1;
+        });
+      }
+      var chip = document.querySelector('[data-action="toggle-project-panel"][data-target="' + kind + '"]');
+      if (chip) chip.disabled = !repos.length;
+      updateProjectFilterLabel(kind);
     });
   }
 
-  function syncDoneFilterControls() {
-    [['board', ui.boardDone], ['tasks', ui.tasksDone]].forEach(function (pair) {
-      var input = $('#' + pair[0] + '-filter-done');
-      if (input && input.value !== pair[1]) input.value = pair[1];
-      var clear = document.querySelector('[data-action="clear-done-filter"][data-target="' + pair[0] + '"]');
-      if (clear) clear.hidden = !pair[1];
+  function updateProjectFilterLabel(kind) {
+    var label = document.querySelector('[data-project-label="' + kind + '"]');
+    if (!label) return;
+    var ids = projectFilterIds(kind);
+    var text;
+    if (!ids.length) {
+      text = 'Todos los proyectos';
+    } else if (ids.length === 1) {
+      if (ids[0] === 'none') {
+        text = 'Sin proyecto';
+      } else {
+        var repo = repoById(ids[0]);
+        text = repo ? repo.name : 'Proyecto no disponible';
+      }
+    } else {
+      text = ids.length + ' filtros';
+    }
+    label.textContent = text;
+    var chip = document.querySelector('[data-action="toggle-project-panel"][data-target="' + kind + '"]');
+    if (chip) {
+      chip.classList.toggle('is-active', ids.length > 0);
+      chip.title = text;
+    }
+  }
+
+  function syncDateFilters() {
+    ['board', 'tasks'].forEach(function (kind) {
+      var day = kind === 'board' ? ui.boardDone : ui.tasksDone;
+      var label = document.querySelector('[data-date-label="' + kind + '"]');
+      var clear = document.querySelector('[data-action="clear-done-filter"][data-target="' + kind + '"]');
+      var chip = document.querySelector('[data-action="toggle-calendar"][data-target="' + kind + '"]');
+      var group = document.querySelector('[data-filter="' + kind + '-done"] .filter-chip-group');
+      if (label) label.textContent = day ? U.formatDate(day) : 'Cualquier día';
+      if (clear) clear.hidden = !day;
+      if (chip) {
+        chip.classList.toggle('is-active', Boolean(day));
+        chip.title = day ? 'Hechas el ' + U.formatDate(day) : 'Filtrar por día de cierre';
+      }
+      if (group) group.classList.toggle('is-active', Boolean(day));
     });
+  }
+
+  function calendarPanel(kind) {
+    return document.querySelector('[data-calendar="' + kind + '"]');
+  }
+
+  function calendarValue(kind) {
+    return kind === 'board' ? ui.boardDone : ui.tasksDone;
+  }
+
+  function renderCalendar(kind) {
+    var panel = calendarPanel(kind);
+    if (!panel) return;
+    panel.setAttribute('role', 'dialog');
+    panel.setAttribute('aria-label', 'Elegir día de cierre');
+    if (!calendarCursor[kind]) {
+      var base = U.parseISO(calendarValue(kind)) || new Date();
+      calendarCursor[kind] = new Date(base.getFullYear(), base.getMonth(), 1);
+    }
+    var cursor = calendarCursor[kind];
+    var year = cursor.getFullYear();
+    var month = cursor.getMonth();
+    var selected = calendarValue(kind);
+    var todayISO = U.todayISO();
+    var monthLabel = capitalize(new Intl.DateTimeFormat('es-CO', { month: 'long', year: 'numeric' }).format(cursor));
+    var fullFmt = new Intl.DateTimeFormat('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    var offset = (new Date(year, month, 1).getDay() + 6) % 7;
+    var cells = '';
+    for (var i = 0; i < 42; i++) {
+      var date = new Date(year, month, 1 - offset + i);
+      var iso = U.toISODate(date);
+      var classes = ['cal-pop__day'];
+      if (date.getMonth() !== month) classes.push('is-outside');
+      if (iso === todayISO) classes.push('is-today');
+      if (iso === selected) classes.push('is-selected');
+      cells += '<button type="button" class="' + classes.join(' ') + '" data-action="calendar-pick" data-target="' + kind + '" data-date="' + iso + '"' +
+        (iso === selected ? ' aria-pressed="true"' : '') +
+        (iso === todayISO ? ' aria-current="date"' : '') +
+        ' aria-label="' + esc(fullFmt.format(date)) + '">' + date.getDate() + '</button>';
+    }
+    panel.innerHTML =
+      '<div class="cal-pop__head">' +
+        '<button type="button" class="cal-pop__nav" data-action="calendar-prev" data-target="' + kind + '" aria-label="Mes anterior">' + icon('chevron_left') + '</button>' +
+        '<span class="cal-pop__month">' + esc(monthLabel) + '</span>' +
+        '<button type="button" class="cal-pop__nav" data-action="calendar-next" data-target="' + kind + '" aria-label="Mes siguiente">' + icon('chevron_right') + '</button>' +
+      '</div>' +
+      '<div class="cal-pop__weekdays" aria-hidden="true"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div>' +
+      '<div class="cal-pop__grid">' + cells + '</div>' +
+      '<div class="cal-pop__foot">' +
+        '<button type="button" class="cal-pop__link" data-action="calendar-today" data-target="' + kind + '">' + icon('today') + ' Hoy</button>' +
+        '<button type="button" class="cal-pop__link" data-action="clear-done-filter" data-target="' + kind + '">' + icon('event_busy') + ' Sin filtro</button>' +
+      '</div>';
+  }
+
+  function closeFilterPanels() {
+    $$('.filter-panel').forEach(function (panel) { panel.hidden = true; });
+    $$('[data-action="toggle-project-panel"], [data-action="toggle-calendar"]').forEach(function (btn) {
+      btn.setAttribute('aria-expanded', 'false');
+    });
+    $$('.filter-popover').forEach(function (pop) { pop.classList.remove('is-right', 'is-up'); });
+  }
+
+  function openFilterPanel(kind, type, btn) {
+    closeFilterPanels();
+    var panel = type === 'calendar'
+      ? calendarPanel(kind)
+      : document.querySelector('[data-project-panel="' + kind + '"]');
+    if (!panel) return;
+    if (type === 'calendar') {
+      calendarCursor[kind] = null;
+      renderCalendar(kind);
+    }
+    panel.hidden = false;
+    btn.setAttribute('aria-expanded', 'true');
+    var pop = btn.closest('.filter-popover');
+    if (pop) {
+      var rect = pop.getBoundingClientRect();
+      var panelRect = panel.getBoundingClientRect();
+      if (rect.left + panelRect.width > window.innerWidth - 12) pop.classList.add('is-right');
+      if (panelRect.bottom > window.innerHeight - 12) {
+        pop.classList.add('is-up');
+        if (panel.getBoundingClientRect().top < 12) pop.classList.remove('is-up');
+      }
+    }
+  }
+
+  function handleFilterPanelAction(action, el) {
+    var kind = el.dataset.target === 'tasks' ? 'tasks' : 'board';
+    if (action === 'toggle-project-panel') {
+      var projectPanel = document.querySelector('[data-project-panel="' + kind + '"]');
+      if (!projectPanel || el.disabled) return;
+      if (projectPanel.hidden) openFilterPanel(kind, 'projects', el);
+      else closeFilterPanels();
+      return;
+    }
+    if (action === 'toggle-calendar') {
+      var panel = calendarPanel(kind);
+      if (!panel) return;
+      if (panel.hidden) openFilterPanel(kind, 'calendar', el);
+      else closeFilterPanels();
+      return;
+    }
+    if (action === 'close-filter-panels') {
+      closeFilterPanels();
+      return;
+    }
+    if (action === 'clear-project-filter') {
+      projectFilterIds(kind).length = 0;
+      syncProjectPanels();
+      if (kind === 'board') renderBoard();
+      else renderTasks();
+      return;
+    }
+    if (action === 'clear-done-filter') {
+      if (kind === 'board') ui.boardDone = '';
+      else ui.tasksDone = '';
+      syncDateFilters();
+      if (kind === 'board') renderBoard();
+      else renderTasks();
+      closeFilterPanels();
+      return;
+    }
+    if (action === 'calendar-prev' || action === 'calendar-next') {
+      if (!calendarCursor[kind]) {
+        var base = U.parseISO(calendarValue(kind)) || new Date();
+        calendarCursor[kind] = new Date(base.getFullYear(), base.getMonth(), 1);
+      }
+      calendarCursor[kind] = new Date(
+        calendarCursor[kind].getFullYear(),
+        calendarCursor[kind].getMonth() + (action === 'calendar-next' ? 1 : -1),
+        1
+      );
+      renderCalendar(kind);
+      return;
+    }
+    if (action === 'calendar-today' || action === 'calendar-pick') {
+      var value = action === 'calendar-today' ? U.todayISO() : el.dataset.date;
+      if (!value) return;
+      if (kind === 'board') ui.boardDone = value;
+      else ui.tasksDone = value;
+      syncDateFilters();
+      if (kind === 'board') renderBoard();
+      else renderTasks();
+      closeFilterPanels();
+    }
   }
 
   /* --------------------------------- Tareas -------------------------------- */
   function sortedFilteredTasks() {
     var tasks = store.getState().tasks.filter(function (task) {
-      return matchesTask(task, ui.tasksSearch, ui.tasksPriority, 'all', ui.tasksProject, ui.tasksDone) &&
+      return matchesTask(task, ui.tasksSearch, ui.tasksPriority, 'all', ui.tasksProjects, ui.tasksDone) &&
         (ui.tasksStatus === 'all' || task.status === ui.tasksStatus);
     });
     var sort = ui.tasksSort;
@@ -2154,8 +2350,14 @@ window.FS = window.FS || {};
     }
     if (action === 'edit-milestone') { openMilestoneModal(el.dataset.id); return; }
     if (action === 'edit-repo') { openRepoModal(el.dataset.id); return; }
+    if (action === 'toggle-project-panel' || action === 'toggle-calendar' || action === 'close-filter-panels' ||
+        action === 'clear-project-filter' || action === 'clear-done-filter' ||
+        action === 'calendar-prev' || action === 'calendar-next' || action === 'calendar-today' || action === 'calendar-pick') {
+      handleFilterPanelAction(action, el);
+      return;
+    }
     if (action === 'filter-tasks-by-repo') {
-      ui.tasksProject = el.dataset.id || 'all';
+      ui.tasksProjects = el.dataset.id ? [el.dataset.id] : [];
       ui.tasksSearch = '';
       ui.tasksStatus = 'all';
       ui.tasksPriority = 'all';
@@ -2167,17 +2369,6 @@ window.FS = window.FS || {};
       var prioritySelect = $('#tasks-filter-priority');
       if (prioritySelect) prioritySelect.value = 'all';
       navigate('tasks');
-      return;
-    }
-    if (action === 'clear-done-filter') {
-      if (el.dataset.target === 'tasks') {
-        ui.tasksDone = '';
-        renderTasks();
-      } else {
-        ui.boardDone = '';
-        renderBoard();
-      }
-      syncDoneFilterControls();
       return;
     }
     if (action === 'open-repo') {
@@ -2318,23 +2509,21 @@ window.FS = window.FS || {};
         ui.tasksSearch = '';
         ui.tasksStatus = 'all';
         ui.tasksPriority = 'all';
-        ui.tasksProject = 'all';
+        ui.tasksProjects = [];
         ui.tasksDone = '';
         ui.tasksSort = 'updated';
         $('#tasks-search').value = '';
         $('#tasks-filter-status').value = 'all';
         $('#tasks-filter-priority').value = 'all';
-        $('#tasks-filter-project').value = 'all';
-        $('#tasks-filter-done').value = '';
         $('#tasks-sort').value = 'updated';
         if (FS.glass) {
           FS.glass.refresh($('#tasks-filter-status'));
           FS.glass.refresh($('#tasks-filter-priority'));
-          FS.glass.refresh($('#tasks-filter-project'));
           FS.glass.refresh($('#tasks-sort'));
         }
         renderTasks();
-        syncDoneFilterControls();
+        syncProjectPanels();
+        syncDateFilters();
         break;
       case 'clear-repo-filters':
         ui.reposSearch = '';
@@ -2350,6 +2539,7 @@ window.FS = window.FS || {};
   }
 
   function onDocumentClick(e) {
+    if (!e.target.closest('.filter-popover')) closeFilterPanels();
     var viewBtn = e.target.closest('.nav-item[data-view]');
     if (viewBtn) {
       navigate(viewBtn.dataset.view);
@@ -2373,6 +2563,7 @@ window.FS = window.FS || {};
 
     if (e.key === 'Escape') {
       if (modalStack.length) { closeTopModal(); return; }
+      if (document.querySelector('.filter-panel:not([hidden])')) { closeFilterPanels(); return; }
       if ($('#terminal').classList.contains('is-open') && !typing) { closeTerminal(); return; }
       if ($('#sidebar').classList.contains('is-open')) { closeSidebar(); return; }
     }
@@ -2408,6 +2599,45 @@ window.FS = window.FS || {};
     }
   }
 
+  function bindFilterPanelEvents() {
+    ['board', 'tasks'].forEach(function (kind) {
+      var list = document.querySelector('[data-project-list="' + kind + '"]');
+      if (list) {
+        list.addEventListener('change', function (e) {
+          var input = e.target.closest('input[type="checkbox"]');
+          if (!input) return;
+          var ids = projectFilterIds(kind);
+          var index = ids.indexOf(input.value);
+          if (input.checked && index === -1) ids.push(input.value);
+          else if (!input.checked && index > -1) ids.splice(index, 1);
+          updateProjectFilterLabel(kind);
+          if (kind === 'board') renderBoard();
+          else renderTasks();
+        });
+      }
+      var cal = calendarPanel(kind);
+      if (!cal) return;
+      cal.addEventListener('keydown', function (e) {
+        var dayBtn = e.target.closest('.cal-pop__day');
+        if (!dayBtn) return;
+        var delta = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 :
+          e.key === 'ArrowUp' ? -7 : e.key === 'ArrowDown' ? 7 : 0;
+        if (!delta) return;
+        e.preventDefault();
+        var date = U.parseISO(dayBtn.dataset.date);
+        if (!date) return;
+        var next = new Date(date.getFullYear(), date.getMonth(), date.getDate() + delta);
+        var cursor = calendarCursor[kind];
+        if (!cursor || next.getMonth() !== cursor.getMonth() || next.getFullYear() !== cursor.getFullYear()) {
+          calendarCursor[kind] = new Date(next.getFullYear(), next.getMonth(), 1);
+          renderCalendar(kind);
+        }
+        var target = calendarPanel(kind).querySelector('.cal-pop__day[data-date="' + U.toISODate(next) + '"]');
+        if (target) target.focus();
+      });
+    });
+  }
+
   function bindFilters() {
     var boardSearch = $('#board-search');
     boardSearch.addEventListener('input', U.debounce(function () {
@@ -2422,24 +2652,6 @@ window.FS = window.FS || {};
       ui.boardAssignee = e.target.value;
       renderBoard();
     });
-    var boardProject = $('#board-filter-project');
-    if (boardProject) {
-      boardProject.addEventListener('change', function (e) {
-        ui.boardProject = e.target.value;
-        renderBoard();
-      });
-    }
-    var boardDone = $('#board-filter-done');
-    if (boardDone) {
-      var onBoardDone = function (e) {
-        if (ui.boardDone === e.target.value) return;
-        ui.boardDone = e.target.value;
-        renderBoard();
-        syncDoneFilterControls();
-      };
-      boardDone.addEventListener('input', onBoardDone);
-      boardDone.addEventListener('change', onBoardDone);
-    }
 
     var tasksSearch = $('#tasks-search');
     tasksSearch.addEventListener('input', U.debounce(function () {
@@ -2458,24 +2670,7 @@ window.FS = window.FS || {};
       ui.tasksSort = e.target.value;
       renderTasks();
     });
-    var tasksProject = $('#tasks-filter-project');
-    if (tasksProject) {
-      tasksProject.addEventListener('change', function (e) {
-        ui.tasksProject = e.target.value;
-        renderTasks();
-      });
-    }
-    var tasksDone = $('#tasks-filter-done');
-    if (tasksDone) {
-      var onTasksDone = function (e) {
-        if (ui.tasksDone === e.target.value) return;
-        ui.tasksDone = e.target.value;
-        renderTasks();
-        syncDoneFilterControls();
-      };
-      tasksDone.addEventListener('input', onTasksDone);
-      tasksDone.addEventListener('change', onTasksDone);
-    }
+    bindFilterPanelEvents();
 
     var reposSearch = $('#repos-search');
     if (reposSearch) {
@@ -2502,6 +2697,7 @@ window.FS = window.FS || {};
     bindFilters();
 
     $('#sidebar-backdrop').addEventListener('click', closeSidebar);
+    window.addEventListener('resize', closeFilterPanels);
     window.addEventListener('hashchange', function () {
       ui.view = routeFromHash();
       render();

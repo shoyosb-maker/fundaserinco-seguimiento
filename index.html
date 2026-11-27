@@ -24,7 +24,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=20261127-4">
+  <link rel="stylesheet" href="css/styles.css?v=20261127-9">
 
   <script>
     (function () {
@@ -123,7 +123,7 @@
           <span class="conn-status__label" id="conn-label">Modo local</span>
         </div>
         <div class="sidebar-version">
-          <span>v0.3.2</span>
+          <span>v0.3.3</span>
           <span>Brand v1.0</span>
         </div>
       </div>
@@ -220,15 +220,40 @@
             <select id="board-filter-assignee" aria-label="Filtrar por responsable">
               <option value="all">Todos los responsables</option>
             </select>
-            <select id="board-filter-project" aria-label="Filtrar por proyecto">
-              <option value="all">Todos los proyectos</option>
-            </select>
-            <div class="date-filter" title="Ver solo las tareas hechas ese día">
-              <span class="material-symbols-outlined">event_available</span>
-              <input id="board-filter-done" type="date" aria-label="Filtrar tareas hechas un día">
-              <button class="date-filter__clear" type="button" data-action="clear-done-filter" data-target="board" aria-label="Quitar filtro de día" title="Quitar filtro de día" hidden>
-                <span class="material-symbols-outlined">close</span>
+            <div class="filter-popover" data-filter="board-projects">
+              <button class="filter-chip" type="button" data-action="toggle-project-panel" data-target="board" aria-haspopup="dialog" aria-expanded="false" aria-controls="board-project-panel">
+                <span class="material-symbols-outlined filter-chip__icon">folder_open</span>
+                <span class="filter-chip__label" data-project-label="board">Todos los proyectos</span>
+                <span class="material-symbols-outlined filter-chip__chevron">expand_more</span>
               </button>
+              <div class="filter-panel" id="board-project-panel" data-project-panel="board" role="dialog" aria-label="Filtrar por proyectos" hidden>
+                <div class="filter-panel__head">
+                  <span class="filter-panel__title">Proyectos</span>
+                  <button class="filter-panel__close" type="button" data-action="close-filter-panels" aria-label="Cerrar panel">
+                    <span class="material-symbols-outlined">close</span>
+                  </button>
+                </div>
+                <div class="filter-panel__list" data-project-list="board"></div>
+                <div class="filter-panel__foot">
+                  <button class="filter-panel__action" type="button" data-action="clear-project-filter" data-target="board">
+                    <span class="material-symbols-outlined">filter_alt_off</span> Limpiar
+                  </button>
+                  <button class="filter-panel__done" type="button" data-action="close-filter-panels">Listo</button>
+                </div>
+              </div>
+            </div>
+            <div class="filter-popover filter-popover--date" data-filter="board-done">
+              <div class="filter-chip-group">
+                <button class="filter-chip" type="button" data-action="toggle-calendar" data-target="board" aria-haspopup="dialog" aria-expanded="false" aria-controls="board-calendar-panel">
+                  <span class="material-symbols-outlined filter-chip__icon">event_available</span>
+                  <span class="filter-chip__label" data-date-label="board">Cualquier día</span>
+                  <span class="material-symbols-outlined filter-chip__chevron">expand_more</span>
+                </button>
+                <button class="filter-chip__clear" type="button" data-action="clear-done-filter" data-target="board" aria-label="Quitar filtro de día" title="Quitar filtro de día" hidden>
+                  <span class="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              <div class="filter-panel filter-panel--calendar" id="board-calendar-panel" data-calendar="board" hidden></div>
             </div>
             <div class="board-toolbar__meta">
               <span id="board-points">0 pts</span>
@@ -298,15 +323,40 @@
               <option value="medium">Media</option>
               <option value="low">Baja</option>
             </select>
-            <select id="tasks-filter-project" aria-label="Filtrar por proyecto">
-              <option value="all">Todos los proyectos</option>
-            </select>
-            <div class="date-filter" title="Ver solo las tareas hechas ese día">
-              <span class="material-symbols-outlined">event_available</span>
-              <input id="tasks-filter-done" type="date" aria-label="Filtrar tareas hechas un día">
-              <button class="date-filter__clear" type="button" data-action="clear-done-filter" data-target="tasks" aria-label="Quitar filtro de día" title="Quitar filtro de día" hidden>
-                <span class="material-symbols-outlined">close</span>
+            <div class="filter-popover" data-filter="tasks-projects">
+              <button class="filter-chip" type="button" data-action="toggle-project-panel" data-target="tasks" aria-haspopup="dialog" aria-expanded="false" aria-controls="tasks-project-panel">
+                <span class="material-symbols-outlined filter-chip__icon">folder_open</span>
+                <span class="filter-chip__label" data-project-label="tasks">Todos los proyectos</span>
+                <span class="material-symbols-outlined filter-chip__chevron">expand_more</span>
               </button>
+              <div class="filter-panel" id="tasks-project-panel" data-project-panel="tasks" role="dialog" aria-label="Filtrar por proyectos" hidden>
+                <div class="filter-panel__head">
+                  <span class="filter-panel__title">Proyectos</span>
+                  <button class="filter-panel__close" type="button" data-action="close-filter-panels" aria-label="Cerrar panel">
+                    <span class="material-symbols-outlined">close</span>
+                  </button>
+                </div>
+                <div class="filter-panel__list" data-project-list="tasks"></div>
+                <div class="filter-panel__foot">
+                  <button class="filter-panel__action" type="button" data-action="clear-project-filter" data-target="tasks">
+                    <span class="material-symbols-outlined">filter_alt_off</span> Limpiar
+                  </button>
+                  <button class="filter-panel__done" type="button" data-action="close-filter-panels">Listo</button>
+                </div>
+              </div>
+            </div>
+            <div class="filter-popover filter-popover--date" data-filter="tasks-done">
+              <div class="filter-chip-group">
+                <button class="filter-chip" type="button" data-action="toggle-calendar" data-target="tasks" aria-haspopup="dialog" aria-expanded="false" aria-controls="tasks-calendar-panel">
+                  <span class="material-symbols-outlined filter-chip__icon">event_available</span>
+                  <span class="filter-chip__label" data-date-label="tasks">Cualquier día</span>
+                  <span class="material-symbols-outlined filter-chip__chevron">expand_more</span>
+                </button>
+                <button class="filter-chip__clear" type="button" data-action="clear-done-filter" data-target="tasks" aria-label="Quitar filtro de día" title="Quitar filtro de día" hidden>
+                  <span class="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              <div class="filter-panel filter-panel--calendar" id="tasks-calendar-panel" data-calendar="tasks" hidden></div>
             </div>
             <select id="tasks-sort" aria-label="Ordenar tareas">
               <option value="updated">Actualizadas primero</option>
@@ -535,13 +585,13 @@
   </noscript>
 
   <!-- Configuración personal no versionada (URL + token de Google). -->
-  <script src="js/local-config.js?v=20261127-4"></script>
-  <script src="js/config.js?v=20261127-4"></script>
-  <script src="js/store.js?v=20261127-4"></script>
-  <script src="js/api.js?v=20261127-4"></script>
-  <script src="js/glass.js?v=20261127-4"></script>
-  <script src="js/app.js?v=20261127-4"></script>
-  <script src="js/terminal.js?v=20261127-4"></script>
+  <script src="js/local-config.js?v=20261127-9"></script>
+  <script src="js/config.js?v=20261127-9"></script>
+  <script src="js/store.js?v=20261127-9"></script>
+  <script src="js/api.js?v=20261127-9"></script>
+  <script src="js/glass.js?v=20261127-9"></script>
+  <script src="js/app.js?v=20261127-9"></script>
+  <script src="js/terminal.js?v=20261127-9"></script>
 </body>
 </html>
 

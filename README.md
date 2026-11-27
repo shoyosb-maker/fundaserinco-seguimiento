@@ -57,9 +57,9 @@ No hay build ni dependencias que instalar. No se sube ningún secreto: la URL y 
 
 | Vista | Función |
 |---|---|
-| **Tablero** | Kanban con 5 estados, arrastrar y soltar, prioridades, etiquetas, proyectos asignados, puntos, responsable, vencimiento y filtros (incluido día de cierre). Cuadrícula adaptable (1/2/3/5 columnas) sin scroll horizontal. |
+| **Tablero** | Kanban con 5 estados, arrastrar y soltar, prioridades, etiquetas, proyectos asignados, puntos, responsable, vencimiento y filtros (panel de proyectos con selección múltiple y calendario de día de cierre). Cuadrícula adaptable (1/2/3/5 columnas) sin scroll horizontal. |
 | **UI glass** | Superficies translúcidas, desenfoque y desplegables personalizados con animación, teclado y modo claro/oscuro. |
-| **Mis tareas** | Lista con búsqueda, filtros (proyecto y día de cierre incluidos), orden y exportación a CSV. |
+| **Mis tareas** | Lista con búsqueda, filtros (panel de proyectos y calendario de día de cierre incluidos), orden y exportación a CSV. |
 | **Métricas** | KPIs, ritmo de cierre semanal, distribución por estado, prioridades, etiquetas, vencimientos y reuniones. |
 | **Roadmap** | Hitos por mes, progreso, cambio rápido de estado y carga de trabajo por vencimiento. |
 | **Reuniones** | Calendario mensual y agenda, reuniones propias, eliminación directa desde la agenda, categorías, invitados, notas, plantilla de Google Calendar y Meet. |

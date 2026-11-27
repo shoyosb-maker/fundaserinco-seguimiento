@@ -3,7 +3,7 @@
  ESTADO DEL PROYECTO
 =======================================================================
 Última actualización : 26 de noviembre de 2026
-Versión             : 0.3.2
+Versión             : 0.3.3
 Estado general      : MVP funcional. Backend de Google conectado
                       (ping y list verificados contra la hoja real).
                       Code.gs ya incluye la hoja Repositorios; falta
@@ -135,15 +135,17 @@ servidor estático o publicar directamente en GitHub Pages.
     asignados, puntos, responsable, vencimiento y estado de atraso.
   · Arrastrar y soltar entre columnas con actualización inmediata.
   · Botón "+" por columna para crear tarea en ese estado.
-  · Filtros por texto, prioridad, responsable, proyecto y día de
-    cierre (muestra las tareas hechas ese día en la columna Hecho).
+  · Filtros por texto, prioridad, responsable, proyectos (panel flotante
+    con casillas y selección múltiple) y día de cierre (calendario
+    flotante con navegación por mes).
   · Contadores y puntos por columna; progreso global.
   · Estados vacíos claros.
 
 4.3 Mis tareas
   · Lista completa con búsqueda, filtro por estado, filtro por prioridad,
-    filtro por proyecto, filtro por día de cierre y orden por
-    actualización, vencimiento, prioridad o título.
+    filtro por proyectos (panel con casillas) y filtro por día de cierre
+    (calendario flotante), con orden por actualización, vencimiento,
+    prioridad o título.
   · Edición en modal, eliminación con confirmación.
   · Exportación CSV con BOM UTF-8 (compatible con Excel).
   · Estado vacío con acción para limpiar filtros.
@@ -868,6 +870,19 @@ P2 · Mejoras
 
 16. HISTORIAL
 =======================================================================
+
+  2026-11-27 · v0.3.3
+    · El filtro de proyectos es ahora un panel flotante con casillas:
+      selección múltiple de proyectos y "Sin proyecto", etiqueta con el
+      número de filtros activos, acciones Limpiar y Listo, y cierre con
+      clic fuera o Escape.
+    · El filtro por día de cierre usa un calendario desplegable propio:
+      mes anterior/siguiente, día de hoy resaltado, navegación con
+      flechas, botones Hoy y Sin filtro, y botón para quitar el filtro.
+    · Los paneles tienen fondo sólido, sombra y animación; se abren
+      hacia arriba si no caben abajo y se alinean a la derecha cuando
+      hace falta.
+    · Cache busting actualizado a 20261127-9.
 
   2026-11-27 · v0.3.2
     · Nuevo filtro por día de cierre en Tablero y Mis tareas: elige una
