@@ -31,6 +31,18 @@ window.FS = window.FS || {};
       .slice(0, 8);
   }
 
+  function normalizeRepoIds(value) {
+    var list = Array.isArray(value) ? value : String(value || '').split(/[,;]+/);
+    var seen = {};
+    return list
+      .map(function (id) { return String(id).trim(); })
+      .filter(function (id) {
+        if (!id || seen[id]) return false;
+        seen[id] = true;
+        return true;
+      });
+  }
+
   function normalizeAttendees(list) {
     if (Array.isArray(list)) {
       return list.map(function (a) { return String(a).trim(); }).filter(Boolean);
@@ -51,6 +63,7 @@ window.FS = window.FS || {};
       priority: FS.findPriority(t.priority).id,
       points: Number(t.points) || 0,
       assignee: String(t.assignee || '').trim(),
+      repoIds: normalizeRepoIds(t.repoIds != null ? t.repoIds : t.repoId),
       tags: normalizeTags(t.tags),
       due: String(t.due || '').slice(0, 10),
       created: t.created || now,
@@ -343,6 +356,11 @@ window.FS = window.FS || {};
       var before = state.repos.length;
       state.repos = state.repos.filter(function (r) { return r.id !== id; });
       if (state.repos.length !== before) {
+        state.tasks.forEach(function (task) {
+          if (!task.repoIds || task.repoIds.indexOf(id) === -1) return;
+          task.repoIds = task.repoIds.filter(function (repoId) { return repoId !== id; });
+          task.updated = nowISO();
+        });
         persist();
         emit('repo:delete');
         return true;

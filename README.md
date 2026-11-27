@@ -57,13 +57,13 @@ No hay build ni dependencias que instalar. No se sube ningún secreto: la URL y 
 
 | Vista | Función |
 |---|---|
-| **Tablero** | Kanban con 5 estados, arrastrar y soltar, prioridades, etiquetas, puntos, responsable, vencimiento y filtros. Cuadrícula adaptable (1/2/3/5 columnas) sin scroll horizontal. |
+| **Tablero** | Kanban con 5 estados, arrastrar y soltar, prioridades, etiquetas, proyectos asignados, puntos, responsable, vencimiento y filtros (incluido día de cierre). Cuadrícula adaptable (1/2/3/5 columnas) sin scroll horizontal. |
 | **UI glass** | Superficies translúcidas, desenfoque y desplegables personalizados con animación, teclado y modo claro/oscuro. |
-| **Mis tareas** | Lista con búsqueda, filtros, orden y exportación a CSV. |
+| **Mis tareas** | Lista con búsqueda, filtros (proyecto y día de cierre incluidos), orden y exportación a CSV. |
 | **Métricas** | KPIs, ritmo de cierre semanal, distribución por estado, prioridades, etiquetas, vencimientos y reuniones. |
 | **Roadmap** | Hitos por mes, progreso, cambio rápido de estado y carga de trabajo por vencimiento. |
 | **Reuniones** | Calendario mensual y agenda, reuniones propias, eliminación directa desde la agenda, categorías, invitados, notas, plantilla de Google Calendar y Meet. |
-| **Repositorios** | Biblioteca de enlaces a los proyectos existentes con nombre, URL, descripción, etiquetas y estado (activo, en pausa o finalizado). Búsqueda, filtro, copiar enlace, acceso directo y sincronización con la hoja **Repositorios** de Google Sheets. |
+| **Repositorios** | Biblioteca de enlaces a los proyectos existentes con nombre, URL, descripción, etiquetas y estado (activo, en pausa o finalizado). Cada proyecto muestra sus tareas vinculadas y permite abrir Mis tareas filtrada por él. Búsqueda, filtro, copiar enlace, acceso directo y sincronización con la hoja **Repositorios** de Google Sheets. |
 | **Guías por sección** | Cada vista incluye una tarjeta de ayuda con 4 pasos. Se oculta con la X y se reabre con el botón **Guía**; el estado se recuerda por sección. |
 | **Terminal** | Consola funcional (`Ctrl + \``) para crear/mover/completar tareas, agendar reuniones, consultar métricas y navegar. |
 | **Ajustes** | Conexión con Google, copiar URL/token, exportar/importar conexión, prueba de conexión, descargar de Google, subir a Google, respaldo/importación JSON y borrado de datos locales. |

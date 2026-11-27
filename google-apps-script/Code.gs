@@ -35,7 +35,7 @@ var SHEETS = {
 };
 
 var HEADERS = {
-  tasks: ['id', 'title', 'description', 'status', 'priority', 'points', 'assignee', 'tags', 'due', 'created', 'updated', 'completedAt'],
+  tasks: ['id', 'title', 'description', 'status', 'priority', 'points', 'assignee', 'tags', 'due', 'created', 'updated', 'completedAt', 'repoIds'],
   meetings: ['id', 'title', 'date', 'start', 'duration', 'category', 'attendees', 'notes', 'meetLink', 'eventLink', 'eventId', 'source', 'created', 'updated'],
   milestones: ['id', 'title', 'date', 'status', 'description', 'created', 'updated'],
   repos: ['id', 'name', 'url', 'description', 'tags', 'status', 'source', 'created', 'updated']
@@ -170,6 +170,12 @@ function setupSheets_() {
       sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
       sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold');
       sheet.setFrozenRows(1);
+    } else {
+      headers.forEach(function (header, i) {
+        if (String(current[i] == null ? '' : current[i]) !== header) {
+          sheet.getRange(1, i + 1).setValue(header);
+        }
+      });
     }
     sheet.getRange(2, 1, Math.max(sheet.getMaxRows() - 1, 1), headers.length).setNumberFormat('@');
   });
@@ -225,6 +231,7 @@ function rowToObject_(headers, row) {
   obj.duration = Number(obj.duration) || 0;
   obj.tags = splitList_(obj.tags);
   obj.attendees = splitList_(obj.attendees);
+  if (obj.repoIds !== undefined) obj.repoIds = splitList_(obj.repoIds);
   return obj;
 }
 

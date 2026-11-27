@@ -22,9 +22,13 @@ window.FS = window.FS || {};
     boardSearch: '',
     boardPriority: 'all',
     boardAssignee: 'all',
+    boardProject: 'all',
+    boardDone: '',
     tasksSearch: '',
     tasksStatus: 'all',
     tasksPriority: 'all',
+    tasksProject: 'all',
+    tasksDone: '',
     tasksSort: 'updated',
     reposSearch: '',
     reposStatus: 'all',
@@ -94,6 +98,51 @@ window.FS = window.FS || {};
 
   function repoById(id) {
     return store.getState().repos.find(function (r) { return r.id === id; });
+  }
+
+  function sortedRepos() {
+    return store.getState().repos.slice().sort(function (a, b) { return a.name.localeCompare(b.name, 'es'); });
+  }
+
+  function taskProjectNames(task) {
+    var ids = (task && task.repoIds) || [];
+    return ids.map(function (id) {
+      var repo = repoById(id);
+      return { id: id, name: repo ? repo.name : 'Proyecto no disponible' };
+    });
+  }
+
+  function taskHasRepo(task, repoId) {
+    return Boolean(task && task.repoIds && task.repoIds.indexOf(repoId) > -1);
+  }
+
+  function completedDay(task) {
+    if (!task || task.status !== 'done') return '';
+    var raw = String(task.completedAt || task.updated || '');
+    if (!raw) return '';
+    if (raw.length <= 10) return raw.slice(0, 10);
+    var date = new Date(raw);
+    return isNaN(date.getTime()) ? raw.slice(0, 10) : U.toISODate(date);
+  }
+
+  function projectChipHtml(name, className) {
+    return '<span class="' + className + '" title="Proyecto: ' + esc(name) + '">' +
+      icon('folder_open') + '<span>' + esc(name) + '</span></span>';
+  }
+
+  function projectChipsHtml(task, wrapperClass, chipClass, limit) {
+    var projects = taskProjectNames(task);
+    if (!projects.length) return '';
+    var max = limit || 2;
+    var chips = projects.slice(0, max).map(function (project) {
+      return projectChipHtml(project.name, chipClass);
+    }).join('');
+    if (projects.length > max) {
+      var rest = projects.slice(max).map(function (project) { return project.name; }).join(', ');
+      chips += '<span class="' + chipClass + '" title="' + esc(rest) + '">' +
+        icon('folder_open') + '<span>+' + (projects.length - max) + '</span></span>';
+    }
+    return wrapperClass ? '<div class="' + wrapperClass + '">' + chips + '</div>' : chips;
   }
 
   function meetingEnd(m) {
@@ -300,6 +349,8 @@ window.FS = window.FS || {};
     else if (ui.view === 'meetings') renderMeetings();
     else if (ui.view === 'repos') renderRepos();
     syncAssigneeOptions();
+    syncProjectOptions();
+    syncDoneFilterControls();
   }
 
   function renderChrome() {
@@ -351,11 +402,20 @@ window.FS = window.FS || {};
   }
 
   /* --------------------------------- Tablero ------------------------------- */
-  function matchesTask(task, search, priority, assignee) {
+  function matchesTask(task, search, priority, assignee, project, doneDay) {
     if (priority !== 'all' && task.priority !== priority) return false;
     if (assignee !== 'all' && (task.assignee || '') !== assignee) return false;
+    if (project && project !== 'all') {
+      if (project === 'none') {
+        if ((task.repoIds || []).length) return false;
+      } else if (!taskHasRepo(task, project)) {
+        return false;
+      }
+    }
+    if (doneDay && completedDay(task) !== doneDay) return false;
     if (!search) return true;
-    var haystack = (task.id + ' ' + task.title + ' ' + task.description + ' ' + (task.tags || []).join(' ') + ' ' + (task.assignee || '')).toLowerCase();
+    var projectNames = taskProjectNames(task).map(function (p) { return p.name; }).join(' ');
+    var haystack = (task.id + ' ' + task.title + ' ' + task.description + ' ' + (task.tags || []).join(' ') + ' ' + (task.assignee || '') + ' ' + projectNames + ' ' + completedDay(task)).toLowerCase();
     return haystack.indexOf(search.toLowerCase()) > -1;
   }
 
@@ -366,7 +426,7 @@ window.FS = window.FS || {};
     var t = today();
 
     var filtered = state.tasks.filter(function (task) {
-      return matchesTask(task, ui.boardSearch, ui.boardPriority, ui.boardAssignee);
+      return matchesTask(task, ui.boardSearch, ui.boardPriority, ui.boardAssignee, ui.boardProject, ui.boardDone);
     });
 
     var byStatus = {};
@@ -413,6 +473,7 @@ window.FS = window.FS || {};
       '</div>' +
       '<h4 class="task-card__title">' + esc(task.title) + '</h4>' +
       (tags ? '<div class="task-card__tags">' + tags + '</div>' : '') +
+      projectChipsHtml(task, 'task-card__projects', 'task-card__project', 2) +
       '<div class="task-card__foot">' +
         (task.points ? '<span class="task-card__points">' + task.points + ' SP</span>' : '') +
         (task.due ? '<span class="task-card__due' + (late ? ' late' : '') + '">' + icon('event') + esc(dueLabel(task.due)) + '</span>' : '') +
@@ -440,10 +501,43 @@ window.FS = window.FS || {};
     if (FS.glass) FS.glass.refresh(select);
   }
 
+  function syncProjectOptions() {
+    var repos = sortedRepos();
+    var signature = repos.map(function (r) { return r.id + ':' + r.name; }).join('|');
+    ['#board-filter-project', '#tasks-filter-project'].forEach(function (sel) {
+      var select = $(sel);
+      if (!select) return;
+      var isTasks = select.id === 'tasks-filter-project';
+      if (select.dataset.signature !== signature) {
+        select.dataset.signature = signature;
+        select.innerHTML = '<option value="all">Todos los proyectos</option>' +
+          '<option value="none">Sin proyecto</option>' +
+          repos.map(function (r) { return '<option value="' + esc(r.id) + '">' + esc(r.name) + '</option>'; }).join('');
+        select.disabled = !repos.length;
+      }
+      var current = isTasks ? ui.tasksProject : ui.boardProject;
+      var valid = current === 'all' || current === 'none' || repos.some(function (r) { return r.id === current; });
+      if (!valid) current = 'all';
+      select.value = current;
+      if (isTasks) ui.tasksProject = current;
+      else ui.boardProject = current;
+      if (FS.glass) FS.glass.refresh(select);
+    });
+  }
+
+  function syncDoneFilterControls() {
+    [['board', ui.boardDone], ['tasks', ui.tasksDone]].forEach(function (pair) {
+      var input = $('#' + pair[0] + '-filter-done');
+      if (input && input.value !== pair[1]) input.value = pair[1];
+      var clear = document.querySelector('[data-action="clear-done-filter"][data-target="' + pair[0] + '"]');
+      if (clear) clear.hidden = !pair[1];
+    });
+  }
+
   /* --------------------------------- Tareas -------------------------------- */
   function sortedFilteredTasks() {
     var tasks = store.getState().tasks.filter(function (task) {
-      return matchesTask(task, ui.tasksSearch, ui.tasksPriority, 'all') &&
+      return matchesTask(task, ui.tasksSearch, ui.tasksPriority, 'all', ui.tasksProject, ui.tasksDone) &&
         (ui.tasksStatus === 'all' || task.status === ui.tasksStatus);
     });
     var sort = ui.tasksSort;
@@ -488,7 +582,7 @@ window.FS = window.FS || {};
       return '<div class="task-row' + (task.status === 'done' ? ' is-done' : '') + '" data-action="edit-task" data-id="' + esc(task.id) + '" role="button" tabindex="0" aria-label="Editar ' + esc(task.title) + '">' +
         '<div class="task-row__main">' +
           '<div class="task-row__title">' + esc(task.title) + '</div>' +
-          '<div class="task-row__meta"><span class="task-row__id">' + esc(task.id) + '</span>' + metaTags + '</div>' +
+          '<div class="task-row__meta"><span class="task-row__id">' + esc(task.id) + '</span>' + metaTags + projectChipsHtml(task, '', 'task-row__project', 2) + '</div>' +
         '</div>' +
         statusChip(task.status) +
         priorityBadge(task.priority) +
@@ -942,6 +1036,7 @@ window.FS = window.FS || {};
 
   function repoCardHtml(repo) {
     var status = FS.findRepoStatus(repo.status);
+    var linkedTasks = store.getState().tasks.filter(function (task) { return taskHasRepo(task, repo.id); }).length;
     var title = repo.url
       ? '<a class="repo-card__title" href="' + esc(repo.url) + '" target="_blank" rel="noopener noreferrer" title="Abrir ' + esc(repo.name) + '">' +
           '<span>' + esc(repo.name) + '</span>' + icon('open_in_new') +
@@ -965,6 +1060,9 @@ window.FS = window.FS || {};
       description +
       tags +
       '<div class="repo-card__foot">' +
+        '<button class="repo-card__tasks" type="button" data-action="filter-tasks-by-repo" data-id="' + esc(repo.id) + '" title="Ver las tareas de este proyecto">' +
+          icon('checklist') + '<span>' + linkedTasks + '</span>' +
+        '</button>' +
         '<span class="repo-card__host" title="' + esc(repo.url) + '">' + icon('link') +
           '<span class="repo-card__host-text">' + esc(repoHost(repo.url)) + '</span>' +
         '</span>' +
@@ -981,14 +1079,37 @@ window.FS = window.FS || {};
   /* ------------------------------ Modal tarea ------------------------------ */
   function openTaskModal(id, defaults) {
     var task = id ? taskById(id) : null;
-    var t = task || Object.assign({ title: '', description: '', status: 'todo', priority: 'medium', points: 0, assignee: '', due: '', tags: [] }, defaults || {});
+    var t = task || Object.assign({ title: '', description: '', status: 'todo', priority: 'medium', points: 0, assignee: '', repoIds: [], due: '', tags: [] }, defaults || {});
     var tagValue = (t.tags || []).join(', ');
+    var repos = sortedRepos();
+    var selectedIds = (t.repoIds || []).slice();
+    var knownIds = repos.map(function (r) { return r.id; });
+    var missingIds = selectedIds.filter(function (id) { return knownIds.indexOf(id) === -1; });
+    var repoPickerItems = repos.map(function (r) {
+      return '<label class="repo-picker__item">' +
+        '<input type="checkbox" name="repoId" value="' + esc(r.id) + '"' + (selectedIds.indexOf(r.id) > -1 ? ' checked' : '') + '>' +
+        '<span class="repo-picker__name">' + esc(r.name) + '</span>' +
+        '<span class="repo-picker__id">' + esc(r.id) + '</span>' +
+      '</label>';
+    }).concat(missingIds.map(function (id) {
+      return '<label class="repo-picker__item">' +
+        '<input type="checkbox" name="repoId" value="' + esc(id) + '" checked>' +
+        '<span class="repo-picker__name">Proyecto no disponible</span>' +
+        '<span class="repo-picker__id">' + esc(id) + '</span>' +
+      '</label>';
+    })).join('');
+    var hasRepoOptions = repos.length || missingIds.length;
 
     var body =
       '<form id="task-form" novalidate>' +
         '<div class="form-grid">' +
           '<div class="field field--full"><label for="task-title">Título *</label><input id="task-title" name="title" required maxlength="140" value="' + esc(t.title) + '" placeholder="¿Qué hay que hacer?"></div>' +
           '<div class="field field--full"><label for="task-desc">Descripción</label><textarea id="task-desc" name="description" placeholder="Contexto, criterios de aceptación, enlaces…">' + esc(t.description || '') + '</textarea></div>' +
+          '<div class="field field--full"><span class="field__label" id="task-repo-label">Proyectos</span>' +
+            (hasRepoOptions
+              ? '<div class="repo-picker" role="group" aria-labelledby="task-repo-label">' + repoPickerItems + '</div>'
+              : '<div class="repo-picker repo-picker--empty">Sin proyectos guardados todavía.</div>') +
+            '<span class="field__hint">' + (hasRepoOptions ? 'Marca uno o varios proyectos de la vista Repositorios.' : 'Crea proyectos en la vista Repositorios del menú lateral para poder asignarlos.') + '</span></div>' +
           '<div class="field"><label for="task-status">Estado</label><select id="task-status" name="status">' +
             FS.STATUSES.map(function (s) { return '<option value="' + s.id + '"' + (t.status === s.id ? ' selected' : '') + '>' + esc(s.label) + '</option>'; }).join('') +
           '</select></div>' +
@@ -1025,6 +1146,7 @@ window.FS = window.FS || {};
         priority: form.priority.value,
         points: Number(form.points.value) || 0,
         assignee: form.assignee.value.trim(),
+        repoIds: $$('input[name="repoId"]:checked', form).map(function (el) { return el.value; }),
         due: form.due.value,
         tags: store.normalizeTags(form.tags.value)
       };
@@ -1939,10 +2061,11 @@ window.FS = window.FS || {};
       toast('No hay tareas para exportar.', 'warn');
       return;
     }
-    var rows = [['ID', 'Título', 'Estado', 'Prioridad', 'Puntos', 'Responsable', 'Etiquetas', 'Vencimiento', 'Creado', 'Actualizado', 'Completado', 'Descripción']];
+    var rows = [['ID', 'Título', 'Proyectos', 'Estado', 'Prioridad', 'Puntos', 'Responsable', 'Etiquetas', 'Vencimiento', 'Creado', 'Actualizado', 'Completado', 'Descripción']];
     tasks.forEach(function (t) {
       rows.push([
-        t.id, t.title, FS.findStatus(t.status).label, FS.findPriority(t.priority).label,
+        t.id, t.title, taskProjectNames(t).map(function (project) { return project.name; }).join(' | '),
+        FS.findStatus(t.status).label, FS.findPriority(t.priority).label,
         t.points, t.assignee, (t.tags || []).join(' | '), t.due,
         t.created, t.updated, t.completedAt || '', t.description
       ]);
@@ -2031,6 +2154,32 @@ window.FS = window.FS || {};
     }
     if (action === 'edit-milestone') { openMilestoneModal(el.dataset.id); return; }
     if (action === 'edit-repo') { openRepoModal(el.dataset.id); return; }
+    if (action === 'filter-tasks-by-repo') {
+      ui.tasksProject = el.dataset.id || 'all';
+      ui.tasksSearch = '';
+      ui.tasksStatus = 'all';
+      ui.tasksPriority = 'all';
+      ui.tasksDone = '';
+      var searchInput = $('#tasks-search');
+      if (searchInput) searchInput.value = '';
+      var statusSelect = $('#tasks-filter-status');
+      if (statusSelect) statusSelect.value = 'all';
+      var prioritySelect = $('#tasks-filter-priority');
+      if (prioritySelect) prioritySelect.value = 'all';
+      navigate('tasks');
+      return;
+    }
+    if (action === 'clear-done-filter') {
+      if (el.dataset.target === 'tasks') {
+        ui.tasksDone = '';
+        renderTasks();
+      } else {
+        ui.boardDone = '';
+        renderBoard();
+      }
+      syncDoneFilterControls();
+      return;
+    }
     if (action === 'open-repo') {
       var repoOpen = repoById(el.dataset.id);
       if (repoOpen && repoOpen.url) window.open(repoOpen.url, '_blank', 'noopener');
@@ -2169,17 +2318,23 @@ window.FS = window.FS || {};
         ui.tasksSearch = '';
         ui.tasksStatus = 'all';
         ui.tasksPriority = 'all';
+        ui.tasksProject = 'all';
+        ui.tasksDone = '';
         ui.tasksSort = 'updated';
         $('#tasks-search').value = '';
         $('#tasks-filter-status').value = 'all';
         $('#tasks-filter-priority').value = 'all';
+        $('#tasks-filter-project').value = 'all';
+        $('#tasks-filter-done').value = '';
         $('#tasks-sort').value = 'updated';
         if (FS.glass) {
           FS.glass.refresh($('#tasks-filter-status'));
           FS.glass.refresh($('#tasks-filter-priority'));
+          FS.glass.refresh($('#tasks-filter-project'));
           FS.glass.refresh($('#tasks-sort'));
         }
         renderTasks();
+        syncDoneFilterControls();
         break;
       case 'clear-repo-filters':
         ui.reposSearch = '';
@@ -2267,6 +2422,24 @@ window.FS = window.FS || {};
       ui.boardAssignee = e.target.value;
       renderBoard();
     });
+    var boardProject = $('#board-filter-project');
+    if (boardProject) {
+      boardProject.addEventListener('change', function (e) {
+        ui.boardProject = e.target.value;
+        renderBoard();
+      });
+    }
+    var boardDone = $('#board-filter-done');
+    if (boardDone) {
+      var onBoardDone = function (e) {
+        if (ui.boardDone === e.target.value) return;
+        ui.boardDone = e.target.value;
+        renderBoard();
+        syncDoneFilterControls();
+      };
+      boardDone.addEventListener('input', onBoardDone);
+      boardDone.addEventListener('change', onBoardDone);
+    }
 
     var tasksSearch = $('#tasks-search');
     tasksSearch.addEventListener('input', U.debounce(function () {
@@ -2285,6 +2458,24 @@ window.FS = window.FS || {};
       ui.tasksSort = e.target.value;
       renderTasks();
     });
+    var tasksProject = $('#tasks-filter-project');
+    if (tasksProject) {
+      tasksProject.addEventListener('change', function (e) {
+        ui.tasksProject = e.target.value;
+        renderTasks();
+      });
+    }
+    var tasksDone = $('#tasks-filter-done');
+    if (tasksDone) {
+      var onTasksDone = function (e) {
+        if (ui.tasksDone === e.target.value) return;
+        ui.tasksDone = e.target.value;
+        renderTasks();
+        syncDoneFilterControls();
+      };
+      tasksDone.addEventListener('input', onTasksDone);
+      tasksDone.addEventListener('change', onTasksDone);
+    }
 
     var reposSearch = $('#repos-search');
     if (reposSearch) {

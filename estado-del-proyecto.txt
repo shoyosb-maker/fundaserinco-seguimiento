@@ -3,7 +3,7 @@
  ESTADO DEL PROYECTO
 =======================================================================
 Última actualización : 26 de noviembre de 2026
-Versión             : 0.3.0
+Versión             : 0.3.2
 Estado general      : MVP funcional. Backend de Google conectado
                       (ping y list verificados contra la hoja real).
                       Code.gs ya incluye la hoja Repositorios; falta
@@ -131,17 +131,19 @@ servidor estático o publicar directamente en GitHub Pages.
       3 columnas 1180–1679 px
       5 columnas >= 1680 px
   · Cinco columnas: Backlog, Por hacer, En progreso, En revisión, Hecho.
-  · Tarjetas con ID (FS-001), prioridad, etiquetas, puntos, responsable,
-    vencimiento y estado de atraso.
+  · Tarjetas con ID (FS-001), prioridad, etiquetas, proyectos
+    asignados, puntos, responsable, vencimiento y estado de atraso.
   · Arrastrar y soltar entre columnas con actualización inmediata.
   · Botón "+" por columna para crear tarea en ese estado.
-  · Filtros por texto, prioridad y responsable.
+  · Filtros por texto, prioridad, responsable, proyecto y día de
+    cierre (muestra las tareas hechas ese día en la columna Hecho).
   · Contadores y puntos por columna; progreso global.
   · Estados vacíos claros.
 
 4.3 Mis tareas
-  · Lista completa con búsqueda, filtro por estado, filtro por prioridad
-    y orden por actualización, vencimiento, prioridad o título.
+  · Lista completa con búsqueda, filtro por estado, filtro por prioridad,
+    filtro por proyecto, filtro por día de cierre y orden por
+    actualización, vencimiento, prioridad o título.
   · Edición en modal, eliminación con confirmación.
   · Exportación CSV con BOM UTF-8 (compatible con Excel).
   · Estado vacío con acción para limpiar filtros.
@@ -308,6 +310,14 @@ servidor estático o publicar directamente en GitHub Pages.
   · Tarjetas con franja de color por estado, etiquetas, dominio visible
     y acciones Abrir, Copiar enlace, Editar y Eliminar (con
     confirmación).
+  · Cada tarjeta muestra cuántas tareas tiene vinculadas; el botón con
+    el contador abre Mis tareas filtrada por ese proyecto.
+  · Al crear o editar una tarea se pueden marcar uno o varios proyectos
+    en la lista "Proyectos" del modal; la tarjeta del tablero y la fila
+    de Mis tareas muestran los proyectos asignados (máximo 2 visibles y
+    +N para el resto).
+  · Si se elimina un repositorio, se quita de las tareas que lo usaban
+    (las tareas no se borran).
   · Resumen superior con total de proyectos, activos, en pausa y
     finalizados.
   · Los repositorios se sincronizan con Google Sheets (hoja
@@ -330,6 +340,7 @@ servidor estático o publicar directamente en GitHub Pages.
   priority      urgent | high | medium | low
   points        Número (SP)
   assignee      Texto
+  repoIds       Arreglo de ids de repositorios/proyectos (RP-001…) o []
   tags          Arreglo de texto
   due           YYYY-MM-DD
   created       ISO 8601
@@ -390,7 +401,8 @@ servidor estático o publicar directamente en GitHub Pages.
 
   Hojas creadas automáticamente:
     Tareas     · id, title, description, status, priority, points,
-                 assignee, tags, due, created, updated, completedAt
+                 assignee, tags, due, created, updated, completedAt,
+                 repoIds
     Reuniones  · id, title, date, start, duration, category, attendees,
                  notes, meetLink, eventLink, eventId, source, created,
                  updated
@@ -856,6 +868,30 @@ P2 · Mejoras
 
 16. HISTORIAL
 =======================================================================
+
+  2026-11-27 · v0.3.2
+    · Nuevo filtro por día de cierre en Tablero y Mis tareas: elige una
+      fecha y verás solo las tareas hechas ese día, calculado en la
+      zona horaria local del navegador.
+    · Botón para quitar el filtro de día; la búsqueda también acepta la
+      fecha de cierre (YYYY-MM-DD).
+    · Cache busting actualizado a 20261127-4.
+
+  2026-11-27 · v0.3.1
+    · Las tareas pueden vincularse a uno o varios proyectos de
+      Repositorios (campo repoIds); el modal de tarea incluye la lista
+      de selección múltiple "Proyectos".
+    · Tablero y Mis tareas muestran los proyectos asignados y agregan
+      filtro por proyecto (incluye "Sin proyecto"); la búsqueda también
+      encuentra por nombre de proyecto.
+    · Exportar CSV incluye la columna Proyectos. La hoja Tareas suma la
+      columna repoIds (lista separada por comas); hay que ejecutar
+      `instalar` de nuevo en Apps Script para escribir el encabezado en
+      una hoja existente.
+    · Las tarjetas de Repositorios muestran cuántas tareas tienen y
+      abren Mis tareas filtrada por ese proyecto. Al eliminar un
+      repositorio se quita de sus tareas, sin borrarlas.
+    · Cache busting actualizado a 20261127-2.
 
   2026-11-26 · v0.3.0
     · Repositorios sincronizados con Google Sheets: hoja Repositorios,

@@ -24,7 +24,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=20261126-2">
+  <link rel="stylesheet" href="css/styles.css?v=20261127-4">
 
   <script>
     (function () {
@@ -123,7 +123,7 @@
           <span class="conn-status__label" id="conn-label">Modo local</span>
         </div>
         <div class="sidebar-version">
-          <span>v0.3.0</span>
+          <span>v0.3.2</span>
           <span>Brand v1.0</span>
         </div>
       </div>
@@ -197,7 +197,7 @@
                 <li><span class="tutorial__step-num">1</span><span>Crea una tarea con <strong>Nueva tarea</strong> o con el <strong>+</strong> de una columna.</span></li>
                 <li><span class="tutorial__step-num">2</span><span>Arrastra una tarjeta a otra columna para cambiar su estado.</span></li>
                 <li><span class="tutorial__step-num">3</span><span>Haz clic en una tarjeta para editar prioridad, puntos, responsable y vencimiento.</span></li>
-                <li><span class="tutorial__step-num">4</span><span>Filtra por texto, prioridad o responsable; el progreso se calcula solo.</span></li>
+                <li><span class="tutorial__step-num">4</span><span>Filtra por texto, prioridad, responsable, proyecto o día de cierre; el progreso se calcula solo.</span></li>
               </ol>
             </div>
             <button class="icon-btn tutorial__close" type="button" data-action="dismiss-tutorial" data-tutorial="board" aria-label="Ocultar guía del tablero">
@@ -220,6 +220,16 @@
             <select id="board-filter-assignee" aria-label="Filtrar por responsable">
               <option value="all">Todos los responsables</option>
             </select>
+            <select id="board-filter-project" aria-label="Filtrar por proyecto">
+              <option value="all">Todos los proyectos</option>
+            </select>
+            <div class="date-filter" title="Ver solo las tareas hechas ese día">
+              <span class="material-symbols-outlined">event_available</span>
+              <input id="board-filter-done" type="date" aria-label="Filtrar tareas hechas un día">
+              <button class="date-filter__clear" type="button" data-action="clear-done-filter" data-target="board" aria-label="Quitar filtro de día" title="Quitar filtro de día" hidden>
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
             <div class="board-toolbar__meta">
               <span id="board-points">0 pts</span>
               <span id="board-progress">0% completado</span>
@@ -236,7 +246,7 @@
           <div class="view-head">
             <div>
               <h2 class="view-head__title">Mis tareas</h2>
-              <p class="view-head__desc">Lista completa con filtros por estado, prioridad y responsable. Haz clic en una fila para editarla.</p>
+              <p class="view-head__desc">Lista completa con filtros por estado, prioridad, responsable, proyecto y día de cierre. Haz clic en una fila para editarla.</p>
             </div>
             <div class="view-head__actions">
               <button class="btn btn-ghost" type="button" data-action="show-tutorial" data-tutorial="tasks">
@@ -258,7 +268,7 @@
               <h3 class="tutorial__title" id="tutorial-tasks-title">Cómo funciona la lista de tareas</h3>
               <ol class="tutorial__steps">
                 <li><span class="tutorial__step-num">1</span><span>Cada fila es una tarea; haz clic para abrirla y editarla.</span></li>
-                <li><span class="tutorial__step-num">2</span><span>Combina la búsqueda con los filtros de estado y prioridad.</span></li>
+                <li><span class="tutorial__step-num">2</span><span>Combina la búsqueda con los filtros de estado, prioridad, proyecto y día de cierre.</span></li>
                 <li><span class="tutorial__step-num">3</span><span>Ordena por actualización, vencimiento, prioridad o título.</span></li>
                 <li><span class="tutorial__step-num">4</span><span>Usa <strong>Exportar CSV</strong> para llevar la lista a Excel.</span></li>
               </ol>
@@ -288,6 +298,16 @@
               <option value="medium">Media</option>
               <option value="low">Baja</option>
             </select>
+            <select id="tasks-filter-project" aria-label="Filtrar por proyecto">
+              <option value="all">Todos los proyectos</option>
+            </select>
+            <div class="date-filter" title="Ver solo las tareas hechas ese día">
+              <span class="material-symbols-outlined">event_available</span>
+              <input id="tasks-filter-done" type="date" aria-label="Filtrar tareas hechas un día">
+              <button class="date-filter__clear" type="button" data-action="clear-done-filter" data-target="tasks" aria-label="Quitar filtro de día" title="Quitar filtro de día" hidden>
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
             <select id="tasks-sort" aria-label="Ordenar tareas">
               <option value="updated">Actualizadas primero</option>
               <option value="due">Vencimiento</option>
@@ -515,13 +535,13 @@
   </noscript>
 
   <!-- Configuración personal no versionada (URL + token de Google). -->
-  <script src="js/local-config.js?v=20261126-2"></script>
-  <script src="js/config.js?v=20261126-2"></script>
-  <script src="js/store.js?v=20261126-2"></script>
-  <script src="js/api.js?v=20261126-2"></script>
-  <script src="js/glass.js?v=20261126-2"></script>
-  <script src="js/app.js?v=20261126-2"></script>
-  <script src="js/terminal.js?v=20261126-2"></script>
+  <script src="js/local-config.js?v=20261127-4"></script>
+  <script src="js/config.js?v=20261127-4"></script>
+  <script src="js/store.js?v=20261127-4"></script>
+  <script src="js/api.js?v=20261127-4"></script>
+  <script src="js/glass.js?v=20261127-4"></script>
+  <script src="js/app.js?v=20261127-4"></script>
+  <script src="js/terminal.js?v=20261127-4"></script>
 </body>
 </html>
 
