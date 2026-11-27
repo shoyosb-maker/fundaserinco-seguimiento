@@ -68,7 +68,7 @@ No hay build ni dependencias que instalar. No se sube ningún secreto: la URL y 
 | **Terminal** | Consola funcional (`Ctrl + \``) para crear/mover/completar tareas, agendar reuniones, consultar métricas y navegar. |
 | **Ajustes** | Conexión con Google, copiar URL/token, exportar/importar conexión, prueba de conexión, respaldo/importación JSON y borrado de datos locales. |
 | **Apps Script** | Ventana emergente desde el menú lateral con la URL y el token editables, botones para copiar cada uno o ambos, descargar un TXT, importar conexión, guardar y acceso directo a Ajustes. |
-| **Google (menú lateral)** | **Descargar de Google** y **Subir a Google** también en el menú lateral, visibles en escritorio y móvil. |
+| **Google (barra superior)** | **Descargar de Google** y **Subir a Google** desde los iconos de la barra superior, en escritorio y móvil. |
 
 ### Atajos
 
@@ -172,7 +172,7 @@ Si ya tenías la versión anterior del backend, actualízala sin cambiar la URL:
 - **Subir a Google** (nube hacia arriba): envía el estado de este navegador (tareas, reuniones, hitos y repositorios) a la hoja. Pide confirmación y no borra filas que no existan en la app.
 - Los **repositorios** se sincronizan con la hoja `Repositorios` y también viajan en **Exportar JSON** e **Importar JSON**.
 - El comando `sync` de la terminal sigue haciendo ambas operaciones.
-- En móvil, las dos acciones también están en el menú lateral, sección **Google**.
+- En móvil, los iconos **Descargar de Google** y **Subir a Google** siguen en la barra superior.
 
 Con eso:
 

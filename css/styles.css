@@ -331,7 +331,7 @@ svg { display: block; }
   border-bottom: 1px solid var(--glass-border);
   box-shadow: var(--glass-highlight);
 }
-.topbar__menu { display: none; }
+.topbar .topbar__menu { display: none; }
 .topbar__title { display: flex; flex-direction: column; min-width: 0; }
 .topbar__crumb {
   font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
@@ -2172,7 +2172,7 @@ details.settings-block code {
   .sidebar.is-open .sidebar-close { display: inline-flex; }
   .shell { margin-left: 0; }
   .topbar { padding: 0 16px; }
-  .topbar__menu { display: inline-flex; }
+  .topbar .topbar__menu { display: inline-flex; }
   .main { padding: 20px 16px 48px; }
   .topbar__crumb { display: none; }
   .topbar__heading { font-size: 18px; }
@@ -2234,10 +2234,11 @@ details.settings-block code {
 
 @media (max-width: 520px) {
   .topbar__actions [data-action="sync"],
-  .topbar__actions [data-action="pull-google"],
-  .topbar__actions [data-action="push-google"],
   .topbar__actions [data-action="open-terminal"],
   .topbar__actions [data-action="open-settings"] { display: none; }
+  .topbar__crumb { display: none; }
+  .topbar .topbar__heading { font-size: 17px; }
+  .topbar__actions { gap: 6px; }
   .main { padding: 16px 12px 40px; }
   .cal-week-head span { font-size: 8px; padding: 6px 4px; text-align: center; }
   .cal-day { min-height: 72px; }

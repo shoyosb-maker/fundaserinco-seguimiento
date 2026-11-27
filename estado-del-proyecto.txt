@@ -3,7 +3,7 @@
  ESTADO DEL PROYECTO
 =======================================================================
 Última actualización : 26 de noviembre de 2026
-Versión             : 0.3.5
+Versión             : 0.3.6
 Estado general      : MVP funcional. Backend de Google conectado
                       (ping y list verificados contra la hoja real).
                       Code.gs ya incluye la hoja Repositorios; falta
@@ -241,8 +241,7 @@ servidor estático o publicar directamente en GitHub Pages.
   · Interruptor "Crear Meet por defecto".
   · Probar conexión (ping real) con mensaje de éxito/error.
   · Este panel ya no incluye Descargar de Google ni Subir a Google:
-    esas acciones viven en el menú lateral (sección Google) y en la
-    barra superior; al usar las del menú lateral se cierra el menú.
+    esas acciones viven en los iconos de la barra superior.
   · Exportar JSON completo.
   · Importar JSON (merge por id).
   · Borrar todos los datos locales (con confirmación; no toca Sheets).
@@ -674,10 +673,8 @@ Verificado en navegador Chromium integrado (390, 768, 1024, 1280,
       la fecha de última sincronización.
   [x] Descargar de Google recupera la tarea remota sin enviar datos.
   [x] Subir sin datos muestra un aviso y no abre confirmación.
-  [x] Botones separados de descarga y subida en la barra superior y en
-      Ajustes, sin desbordamiento a 390 px.
-  [x] Sección Google del menú lateral visible en móvil; Descargar y
-      Subir cierran el menú y ejecutan solo su acción.
+  [x] Botones separados de descarga y subida en la barra superior,
+      sin desbordamiento a 390 px.
   [x] Credenciales predeterminadas cargadas desde js/local-config.js
       sin guardar secretos en Git.
   [x] Sin errores de JavaScript en los flujos anteriores.
@@ -870,6 +867,16 @@ P2 · Mejoras
 
 16. HISTORIAL
 =======================================================================
+
+  2026-11-27 · v0.3.6
+    · Se quitó la sección Google del menú lateral (Descargar de Google
+      y Subir a Google); ambas acciones quedan en los iconos de la
+      barra superior.
+    · El botón de menú (hamburguesa) solo se muestra en móvil; en
+      escritorio el sidebar queda siempre visible.
+    · En pantallas pequeñas se mantienen los iconos de Descargar y
+      Subir y se oculta la miga de pan para dejar espacio.
+    · Version 0.3.6 y cache busting 20261127-16.
 
   2026-11-27 · v0.3.5
     · Nuevo panel "Tareas por proyecto" en Métricas: agrupa las tareas
