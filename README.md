@@ -66,7 +66,7 @@ No hay build ni dependencias que instalar. No se sube ningún secreto: la URL y 
 | **Repositorios** | Biblioteca de enlaces a los proyectos existentes con nombre, URL, descripción, etiquetas y estado (activo, en pausa o finalizado). Cada proyecto muestra sus tareas vinculadas y permite abrir Mis tareas filtrada por él. Búsqueda, filtro, copiar enlace, acceso directo y sincronización con la hoja **Repositorios** de Google Sheets. |
 | **Guías por sección** | Cada vista incluye una tarjeta de ayuda con 4 pasos. Se oculta con la X y se reabre con el botón **Guía**; el estado se recuerda por sección. |
 | **Terminal** | Consola funcional (`Ctrl + \``) para crear/mover/completar tareas, agendar reuniones, consultar métricas y navegar. |
-| **Ajustes** | Conexión con Google, copiar URL/token, exportar/importar conexión, prueba de conexión, descargar de Google, subir a Google, respaldo/importación JSON y borrado de datos locales. |
+| **Ajustes** | Conexión con Google, copiar URL/token, exportar/importar conexión, prueba de conexión, respaldo/importación JSON y borrado de datos locales. |
 | **Apps Script** | Ventana emergente desde el menú lateral con la URL y el token editables, botones para copiar cada uno o ambos, descargar un TXT, importar conexión, guardar y acceso directo a Ajustes. |
 | **Google (menú lateral)** | **Descargar de Google** y **Subir a Google** también en el menú lateral, visibles en escritorio y móvil. |
 

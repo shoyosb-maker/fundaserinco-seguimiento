@@ -1887,11 +1887,8 @@ window.FS = window.FS || {};
         '<div id="settings-test-result" style="margin-top:12px"></div>' +
         '<div class="field-row" style="margin-top:12px;flex-wrap:wrap">' +
           '<button class="btn btn-ghost btn-sm" type="button" id="settings-test">' + icon('network_check') + ' Probar conexión</button>' +
-          '<button class="btn btn-ghost btn-sm" type="button" id="settings-pull">' + icon('cloud_download') + ' Descargar de Google</button>' +
-          '<button class="btn btn-ghost btn-sm" type="button" id="settings-push">' + icon('cloud_upload') + ' Subir a Google</button>' +
           '<span class="faint small" style="margin-left:auto">' + (online ? 'Conectado' : 'Sin verificar') + '</span>' +
         '</div>' +
-        '<p class="faint small" style="margin-top:6px">Descargar trae los datos de la hoja a este navegador. Subir envía los datos de este navegador a la hoja; no borra filas que no estén en la app.</p>' +
         '<details class="settings-block" style="margin-top:14px">' +
           '<summary>' + icon('menu_book') + 'Cómo conectar Google Sheets y Calendar</summary>' +
           '<ol>' +
@@ -2036,18 +2033,6 @@ window.FS = window.FS || {};
           '<div><strong>No se pudo conectar.</strong> ' + esc(err.message) + '</div></div>';
         setConnection(FS.isConfigured() ? 'error' : 'local', err.message);
       }).finally(function () { btn.disabled = false; });
-    });
-
-    handle.root.querySelector('#settings-pull').addEventListener('click', function () {
-      FS.saveSettings(readSettings());
-      handle.close();
-      pullFromGoogle();
-    });
-
-    handle.root.querySelector('#settings-push').addEventListener('click', function () {
-      FS.saveSettings(readSettings());
-      handle.close();
-      pushToGoogle();
     });
 
     handle.root.querySelector('#settings-export').addEventListener('click', exportJson);
