@@ -791,6 +791,117 @@ window.FS = window.FS || {};
   }
 
   /* -------------------------------- Métricas ------------------------------- */
+  function sortProjectTasks(a, b) {
+    var aDone = a.status === 'done';
+    var bDone = b.status === 'done';
+    if (aDone !== bDone) return aDone ? 1 : -1;
+    var pa = FS.findPriority(a.priority).weight;
+    var pb = FS.findPriority(b.priority).weight;
+    if (pa !== pb) return pa - pb;
+    if (a.due && b.due && a.due !== b.due) return a.due.localeCompare(b.due);
+    if (a.due && !b.due) return -1;
+    if (!a.due && b.due) return 1;
+    return String(b.updated).localeCompare(String(a.updated));
+  }
+
+  function projectMetricsGroups() {
+    var state = store.getState();
+    var byRepo = {};
+    var unlinked = [];
+    state.tasks.forEach(function (task) {
+      var ids = task.repoIds || [];
+      if (!ids.length) unlinked.push(task);
+      ids.forEach(function (id) {
+        (byRepo[id] = byRepo[id] || []).push(task);
+      });
+    });
+    var groups = state.repos.map(function (repo) {
+      return {
+        id: repo.id,
+        name: repo.name,
+        meta: repo.id + ' · ' + FS.findRepoStatus(repo.status).label,
+        tasks: byRepo[repo.id] || [],
+        unlinked: false
+      };
+    });
+    groups.sort(function (a, b) {
+      return b.tasks.length - a.tasks.length || a.name.localeCompare(b.name, 'es');
+    });
+    if (unlinked.length) {
+      groups.push({ id: 'none', name: 'Sin proyecto', meta: 'Tareas sin proyecto asignado', tasks: unlinked, unlinked: true });
+    }
+    return groups;
+  }
+
+  function projectGroupHtml(group) {
+    var tasks = group.tasks.slice().sort(sortProjectTasks);
+    var done = tasks.filter(function (task) { return task.status === 'done'; }).length;
+    var open = tasks.length - done;
+    var points = tasks.reduce(function (acc, task) { return acc + (task.points || 0); }, 0);
+    var pct = tasks.length ? Math.round((done / tasks.length) * 100) : 0;
+    var action = group.unlinked ? 'filter-tasks-by-no-project' : 'filter-tasks-by-repo';
+    var idAttr = group.unlinked ? '' : ' data-id="' + esc(group.id) + '"';
+    var shown = tasks.slice(0, 5);
+    var rows = shown.map(function (task) {
+      var late = task.due && task.due < today() && task.status !== 'done';
+      return '<button type="button" class="proj-task' + (task.status === 'done' ? ' is-done' : '') + '" data-action="edit-task" data-id="' + esc(task.id) + '" title="Editar ' + esc(task.title) + '">' +
+        statusChip(task.status) +
+        '<span class="proj-task__title">' + esc(task.title) + '</span>' +
+        '<span class="proj-task__id">' + esc(task.id) + '</span>' +
+        (task.due ? '<span class="proj-task__due' + (late ? ' late' : '') + '">' + esc(dueLabel(task.due)) + '</span>' : '') +
+        (task.points ? '<span class="proj-task__points">' + task.points + ' SP</span>' : '') +
+        '<span class="proj-task__assignee" title="' + esc(task.assignee || 'Sin responsable') + '">' + esc(task.assignee ? initials(task.assignee) : '—') + '</span>' +
+      '</button>';
+    }).join('');
+    var more = tasks.length > shown.length
+      ? '<div class="proj-more">+' + (tasks.length - shown.length) + (tasks.length - shown.length === 1 ? ' tarea más' : ' tareas más') + ' · ' +
+          '<button class="proj-more__link" type="button" data-action="' + action + '"' + idAttr + '>Ver todas</button></div>'
+      : '';
+    return '<section class="proj-group">' +
+      '<div class="proj-group__head">' +
+        '<span class="proj-group__icon' + (group.unlinked ? ' proj-group__icon--none' : '') + '">' + icon(group.unlinked ? 'layers_clear' : 'folder_open') + '</span>' +
+        '<div class="proj-group__name-wrap">' +
+          '<span class="proj-group__name">' + esc(group.name) + '</span>' +
+          '<span class="proj-group__meta">' + esc(group.meta) + '</span>' +
+        '</div>' +
+        '<div class="proj-group__stats">' +
+          '<span><strong>' + tasks.length + '</strong> ' + (tasks.length === 1 ? 'tarea' : 'tareas') + '</span>' +
+          '<span><strong>' + open + '</strong> ' + (open === 1 ? 'abierta' : 'abiertas') + '</span>' +
+          '<span><strong>' + points + '</strong> pts</span>' +
+        '</div>' +
+        '<button class="btn btn-ghost btn-sm proj-group__action" type="button" data-action="' + action + '"' + idAttr + (tasks.length ? '' : ' disabled') + '>' +
+          icon('filter_alt') + ' Ver tareas' +
+        '</button>' +
+      '</div>' +
+      '<div class="proj-group__progress"><span class="hbar"><span class="hbar__fill" style="width:' + pct + '%"></span></span>' +
+        '<span class="proj-group__pct">' + pct + '% completado</span></div>' +
+      '<div class="proj-group__tasks">' +
+        (rows || '<p class="proj-group__empty">Sin tareas vinculadas todavía.</p>') + more +
+      '</div>' +
+    '</section>';
+  }
+
+  function projectsMetricsHtml() {
+    var groups = projectMetricsGroups();
+    if (!groups.length) return '';
+    var links = groups.reduce(function (acc, group) { return acc + (group.unlinked ? 0 : group.tasks.length); }, 0);
+    var withTasks = groups.filter(function (group) { return group.tasks.length > 0; }).length;
+    var noRepos = !store.getState().repos.length;
+    return '<div class="panel chart-card metrics-projects">' +
+      '<div class="chart-card__head">' +
+        '<div><div class="chart-card__title">Tareas por proyecto</div>' +
+        '<div class="chart-card__sub">' + links + (links === 1 ? ' vínculo' : ' vínculos') + ' entre tareas y proyectos · ' +
+          withTasks + (withTasks === 1 ? ' grupo con tareas' : ' grupos con tareas') + '. Una tarea con varios proyectos aparece en cada uno.</div></div>' +
+        '<button class="btn btn-ghost btn-sm" type="button" data-action="new-task">' + icon('add') + ' Nueva tarea</button>' +
+      '</div>' +
+      (noRepos
+        ? '<div class="callout" style="margin-bottom:12px">' + icon('info') +
+            '<div>Aún no hay proyectos. Créalos en <strong>Repositorios</strong> y asígnalos a las tareas para ver la relación aquí.</div></div>'
+        : '') +
+      '<div class="proj-groups">' + groups.map(projectGroupHtml).join('') + '</div>' +
+    '</div>';
+  }
+
   function renderMetrics() {
     var el = $('#metrics-content');
     if (!el) return;
@@ -861,6 +972,8 @@ window.FS = window.FS || {};
         }).join('')
       : '<p class="faint small">Sin reuniones próximas.</p>';
 
+    var projectsHtml = stats.total ? projectsMetricsHtml() : '';
+
     el.innerHTML =
       '<div class="kpi-grid">' + kpiHtml + '</div>' +
       (stats.total === 0
@@ -883,6 +996,7 @@ window.FS = window.FS || {};
           '</div>' +
         '</div>' +
       '</div>' +
+      projectsHtml +
       '<div class="split-grid">' +
         '<div class="panel chart-card"><div class="chart-card__head"><div><div class="chart-card__title">Prioridades</div><div class="chart-card__sub">Carga por nivel de urgencia</div></div></div>' +
           '<div style="display:flex;flex-direction:column;gap:12px">' + priorities + '</div>' +
@@ -2321,6 +2435,21 @@ window.FS = window.FS || {};
   }
 
   /* -------------------------------- Acciones ------------------------------- */
+  function openTasksWithProjects(projects) {
+    ui.tasksProjects = projects;
+    ui.tasksSearch = '';
+    ui.tasksStatus = 'all';
+    ui.tasksPriority = 'all';
+    ui.tasksDone = '';
+    var searchInput = $('#tasks-search');
+    if (searchInput) searchInput.value = '';
+    var statusSelect = $('#tasks-filter-status');
+    if (statusSelect) statusSelect.value = 'all';
+    var prioritySelect = $('#tasks-filter-priority');
+    if (prioritySelect) prioritySelect.value = 'all';
+    navigate('tasks');
+  }
+
   function handleAction(action, el, e) {
     if (action === 'edit-task') {
       if (ui.dragging || Date.now() - ui.justDragged < 320) return;
@@ -2342,18 +2471,11 @@ window.FS = window.FS || {};
       return;
     }
     if (action === 'filter-tasks-by-repo') {
-      ui.tasksProjects = el.dataset.id ? [el.dataset.id] : [];
-      ui.tasksSearch = '';
-      ui.tasksStatus = 'all';
-      ui.tasksPriority = 'all';
-      ui.tasksDone = '';
-      var searchInput = $('#tasks-search');
-      if (searchInput) searchInput.value = '';
-      var statusSelect = $('#tasks-filter-status');
-      if (statusSelect) statusSelect.value = 'all';
-      var prioritySelect = $('#tasks-filter-priority');
-      if (prioritySelect) prioritySelect.value = 'all';
-      navigate('tasks');
+      openTasksWithProjects(el.dataset.id ? [el.dataset.id] : []);
+      return;
+    }
+    if (action === 'filter-tasks-by-no-project') {
+      openTasksWithProjects(['none']);
       return;
     }
     if (action === 'open-repo') {

@@ -1344,6 +1344,97 @@ select {
 .priority-row .hbar { flex: 1; }
 .priority-row__value { width: 22px; text-align: right; font-family: var(--mono); color: var(--ink); }
 
+/* Relación tareas ↔ proyectos */
+.metrics-projects { margin-bottom: 14px; }
+.proj-groups { display: flex; flex-direction: column; gap: 10px; }
+.proj-group {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--panel-2);
+  padding: 12px 14px;
+}
+.proj-group__head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.proj-group__icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+.proj-group__icon--none { background: var(--panel-3); color: var(--muted); }
+.proj-group__icon .material-symbols-outlined { font-size: 18px; }
+.proj-group__name-wrap { flex: 1 1 160px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.proj-group__name { font-size: 13px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.proj-group__meta { font-family: var(--mono); font-size: 10px; color: var(--faint); }
+.proj-group__stats { display: flex; align-items: center; gap: 0; flex-wrap: wrap; font-size: 10.5px; color: var(--muted); }
+.proj-group__stats span + span { position: relative; margin-left: 12px; }
+.proj-group__stats span + span::before {
+  content: "";
+  position: absolute;
+  left: -7px;
+  top: 50%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--faint);
+  transform: translateY(-50%);
+}
+.proj-group__stats strong { color: var(--ink); font-weight: 800; }
+.proj-group__action { flex-shrink: 0; }
+.proj-group__progress { display: flex; align-items: center; gap: 10px; margin: 9px 0 4px; }
+.proj-group__progress .hbar { flex: 1; height: 5px; }
+.proj-group__pct { font-size: 10px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+.proj-group__tasks { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+.proj-group__empty { margin: 6px 0 0; font-size: 11.5px; color: var(--faint); }
+.proj-task {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 11.5px;
+  text-align: left;
+}
+.proj-task:hover { background: var(--primary-soft); }
+.proj-task.is-done .proj-task__title { text-decoration: line-through; color: var(--muted); }
+.proj-task .status-chip { height: 20px; font-size: 9.5px; flex-shrink: 0; }
+.proj-task__title { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.proj-task__id { font-family: var(--mono); font-size: 9.5px; color: var(--faint); flex-shrink: 0; }
+.proj-task__due { font-size: 10px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+.proj-task__due.late { color: var(--danger); }
+.proj-task__points { font-family: var(--mono); font-size: 10px; color: var(--muted); flex-shrink: 0; }
+.proj-task__assignee {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-soft-2);
+  color: var(--primary-strong);
+  font-size: 8.5px;
+  font-weight: 800;
+}
+.proj-more { padding: 6px 8px 0; font-size: 10.5px; color: var(--muted); }
+.proj-more__link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  font-size: 10.5px;
+  font-weight: 800;
+}
+.proj-more__link:hover { text-decoration: underline; }
+
 /* ------------------------------- Roadmap --------------------------------- */
 .roadmap-summary {
   display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
@@ -2135,6 +2226,10 @@ details.settings-block code {
   .view-head { margin-bottom: 16px; }
   .terminal { height: 46vh; }
   .kpi__value { font-size: 24px; }
+  .proj-group { padding: 10px 11px; }
+  .proj-group__head { gap: 8px; }
+  .proj-group__stats { gap: 8px; }
+  .proj-task__id, .proj-task__points { display: none; }
 }
 
 @media (max-width: 520px) {
